@@ -40,6 +40,21 @@ module Tabula
       warn "Error: #{e.message}"
       warn parser
       1
+    rescue Tabula::FileNotFoundError => e
+      warn "Error: #{e.message}"
+      warn "Please check that the file path is correct and the file exists."
+      1
+    rescue Tabula::InvalidOptionsError => e
+      warn "Error: Invalid option - #{e.message}"
+      warn "Use --help to see available options and their valid values."
+      1
+    rescue Tabula::InvalidPDFError => e
+      warn "Error: Invalid PDF file - #{e.message}"
+      1
+    rescue Tabula::PasswordRequiredError => e
+      warn "Error: PDF is password protected - #{e.message}"
+      warn "Use the -s/--password option to provide the password."
+      1
     rescue StandardError => e
       warn "Error: #{e.message}"
       warn e.backtrace.first(5).join("\n") if @options[:debug]
@@ -128,7 +143,15 @@ module Tabula
     def parse_area(value)
       parts = value.split(",").map(&:strip)
       unless parts.size == 4
-        raise ArgumentError, "Area must have 4 values: top,left,bottom,right"
+        raise Tabula::InvalidOptionsError, "Area must have 4 values: top,left,bottom,right (got #{parts.size} values)"
+      end
+
+      parts.each_with_index do |p, idx|
+        labels = %w[top left bottom right]
+        clean_value = p.end_with?("%") ? p.chomp("%") : p
+        unless clean_value.match?(/\A-?\d+(\.\d+)?\z/)
+          raise Tabula::InvalidOptionsError, "Area #{labels[idx]} must be numeric, got '#{p}'"
+        end
       end
 
       parts.map do |p|
@@ -147,10 +170,27 @@ module Tabula
       value.split(",").each do |part|
         part = part.strip
         if part.include?("-")
-          range = part.split("-").map(&:to_i)
+          range_parts = part.split("-")
+          unless range_parts.size == 2 && range_parts.all? { |p| p.match?(/\A\d+\z/) }
+            raise Tabula::InvalidOptionsError, "Invalid page range: '#{part}'. Use format like '1-5'"
+          end
+          range = range_parts.map(&:to_i)
+          if range[0] <= 0 || range[1] <= 0
+            raise Tabula::InvalidOptionsError, "Page numbers must be positive integers, got '#{part}'"
+          end
+          if range[0] > range[1]
+            raise Tabula::InvalidOptionsError, "Invalid page range: '#{part}'. Start must be less than or equal to end"
+          end
           pages.concat((range[0]..range[1]).to_a)
         else
-          pages << part.to_i
+          unless part.match?(/\A\d+\z/)
+            raise Tabula::InvalidOptionsError, "Invalid page number: '#{part}'. Page numbers must be positive integers"
+          end
+          page_num = part.to_i
+          if page_num <= 0
+            raise Tabula::InvalidOptionsError, "Page numbers must be positive integers, got '#{part}'"
+          end
+          pages << page_num
         end
       end
       pages.uniq.sort
@@ -166,6 +206,7 @@ module Tabula
 
           unless File.exist?(file)
             warn "Error: File not found: #{file}"
+            warn "Please check that the file path is correct and the file exists."
             had_error = true
             next
           end

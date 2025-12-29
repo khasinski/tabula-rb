@@ -93,6 +93,65 @@ RSpec.describe "CLI" do
 
       expect(status.success?).to be false
     end
+
+    it "provides helpful message for file not found" do
+      _stdout, stderr, status = Open3.capture3(
+        "#{bundle_cmd} #{cli_path} nonexistent.pdf"
+      )
+
+      expect(status.success?).to be false
+      expect(stderr).to include("Please check that the file path is correct")
+    end
+
+    it "fails with invalid page range" do
+      pdf_path = fixture_pdf("us-017")
+      _stdout, stderr, status = Open3.capture3(
+        "#{bundle_cmd} #{cli_path} -p 5-2 #{pdf_path}"
+      )
+
+      expect(status.success?).to be false
+      expect(stderr).to include("Invalid page range")
+    end
+
+    it "fails with non-numeric page" do
+      pdf_path = fixture_pdf("us-017")
+      _stdout, stderr, status = Open3.capture3(
+        "#{bundle_cmd} #{cli_path} -p abc #{pdf_path}"
+      )
+
+      expect(status.success?).to be false
+      expect(stderr).to include("Invalid page number")
+    end
+
+    it "fails with invalid area format" do
+      pdf_path = fixture_pdf("us-017")
+      _stdout, stderr, status = Open3.capture3(
+        "#{bundle_cmd} #{cli_path} -a 10,20,30 #{pdf_path}"
+      )
+
+      expect(status.success?).to be false
+      expect(stderr).to include("Area must have 4 values")
+    end
+
+    it "fails with non-numeric area values" do
+      pdf_path = fixture_pdf("us-017")
+      _stdout, stderr, status = Open3.capture3(
+        "#{bundle_cmd} #{cli_path} -a 10,abc,30,40 #{pdf_path}"
+      )
+
+      expect(status.success?).to be false
+      expect(stderr).to include("must be numeric")
+    end
+
+    it "shows helpful hint for invalid options" do
+      pdf_path = fixture_pdf("us-017")
+      _stdout, stderr, status = Open3.capture3(
+        "#{bundle_cmd} #{cli_path} -p abc #{pdf_path}"
+      )
+
+      expect(status.success?).to be false
+      expect(stderr).to include("Use --help")
+    end
   end
 
   describe "page selection" do

@@ -47,6 +47,10 @@ module Tabula
   class Error < StandardError; end
   class InvalidPDFError < Error; end
   class PasswordRequiredError < Error; end
+  class FileNotFoundError < Error; end
+  class InvalidOptionsError < Error; end
+
+  VALID_METHODS = %i[lattice stream auto].freeze
 
   class << self
     # Extract tables from a PDF file
@@ -60,7 +64,12 @@ module Tabula
     # @option options [String] :password PDF password
     # @option options [Boolean] :guess auto-detect table areas
     # @return [Array<Table>] extracted tables
+    # @raise [FileNotFoundError] if the file does not exist
+    # @raise [InvalidOptionsError] if options are invalid
     def extract(path, **options)
+      validate_file!(path)
+      validate_options!(options)
+
       ObjectExtractor.open(path, password: options[:password]) do |extractor|
         pages = options[:pages] || (1..extractor.page_count).to_a
         method = options[:method] || :auto
@@ -90,6 +99,47 @@ module Tabula
     end
 
     private
+
+    def validate_file!(path)
+      raise FileNotFoundError, "File not found: #{path}" unless File.exist?(path)
+    end
+
+    def validate_options!(options)
+      validate_pages!(options[:pages]) if options[:pages]
+      validate_area!(options[:area]) if options[:area]
+      validate_method!(options[:method]) if options[:method]
+    end
+
+    def validate_pages!(pages)
+      unless pages.is_a?(Array)
+        raise InvalidOptionsError, "Pages must be an array, got #{pages.class}"
+      end
+
+      pages.each do |page|
+        unless page.is_a?(Integer) && page.positive?
+          raise InvalidOptionsError, "Page numbers must be positive integers, got #{page.inspect}"
+        end
+      end
+    end
+
+    def validate_area!(area)
+      unless area.is_a?(Array) && area.size == 4
+        raise InvalidOptionsError, "Area must be an array of exactly 4 values [top, left, bottom, right], got #{area.inspect}"
+      end
+
+      area.each_with_index do |value, index|
+        labels = %w[top left bottom right]
+        unless value.is_a?(Numeric)
+          raise InvalidOptionsError, "Area #{labels[index]} must be numeric, got #{value.inspect}"
+        end
+      end
+    end
+
+    def validate_method!(method)
+      unless VALID_METHODS.include?(method)
+        raise InvalidOptionsError, "Method must be one of #{VALID_METHODS.map(&:inspect).join(', ')}, got #{method.inspect}"
+      end
+    end
 
     def extract_from_page(page, method, columns)
       case method
