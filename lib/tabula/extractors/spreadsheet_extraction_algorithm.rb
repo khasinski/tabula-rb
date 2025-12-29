@@ -73,15 +73,35 @@ module Tabula
             v.y1 <= top + tolerance && v.y2 >= bottom - tolerance
           end
 
-          # Get unique X positions from vertical rulings only
-          x_positions = row_verticals.map { |v| v.x1.round(1) }.uniq.sort
+          # Find horizontal rulings at top or bottom of this row
+          row_horizontals = horizontal_rulings.select do |h|
+            (h.y1 - top).abs <= tolerance || (h.y1 - bottom).abs <= tolerance
+          end
+
+          # Get X positions from vertical rulings
+          x_positions = row_verticals.map { |v| v.x1.round(1) }.uniq
+
+          # Also add horizontal ruling endpoints as potential column boundaries
+          # This handles tables where the leftmost/rightmost column has no vertical border
+          row_horizontals.each do |h|
+            x_positions << h.x1.round(1)
+            x_positions << h.x2.round(1)
+          end
+
+          x_positions = x_positions.uniq.sort
 
           next if x_positions.size < 2
 
           # Create cells for this row
           x_positions.each_cons(2) do |left, right|
+            # Skip very narrow cells (likely noise)
+            next if (right - left) < 10
+
             # Verify this cell has valid edges
             if valid_cell_by_edges?(left, right, top, bottom, horizontal_rulings, vertical_rulings, tolerance)
+              cells << Cell.new(top, left, right - left, bottom - top)
+            # Also accept cells where we have top/bottom edges (horizontal rulings) even without side edges
+            elsif valid_cell_horizontal_edges?(left, right, top, bottom, horizontal_rulings, tolerance)
               cells << Cell.new(top, left, right - left, bottom - top)
             # Also accept cells with corner validation
             elsif valid_cell_by_corners?(left, right, top, bottom, intersections, tolerance)
@@ -91,6 +111,25 @@ module Tabula
         end
 
         cells
+      end
+
+      # Check if a cell has valid top and bottom horizontal edges (for cells without side borders)
+      def valid_cell_horizontal_edges?(left, right, top, bottom, horizontal_rulings, tolerance)
+        # Check for top edge (horizontal ruling at top that covers left to right)
+        has_top = horizontal_rulings.any? do |h|
+          (h.y1 - top).abs <= tolerance &&
+            h.x1 <= left + tolerance &&
+            h.x2 >= right - tolerance
+        end
+
+        # Check for bottom edge
+        has_bottom = horizontal_rulings.any? do |h|
+          (h.y1 - bottom).abs <= tolerance &&
+            h.x1 <= left + tolerance &&
+            h.x2 >= right - tolerance
+        end
+
+        has_top && has_bottom
       end
 
       def build_intersection_map(horizontal_rulings, vertical_rulings)
