@@ -5,9 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0] - 2024
+## [1.0.0] - 2024
 
-Initial release of tabula-rb, a Ruby port of tabula-java.
+Initial stable release of tabula-rb, a pure Ruby port of tabula-java.
 
 ### Added
 
@@ -54,8 +54,6 @@ Initial release of tabula-rb, a Ruby port of tabula-java.
   - Customizable tolerance thresholds for text merging
   - Configurable cell detection parameters
 
-### Known Limitations
+### Notes
 
-- Percentage-based area specification in CLI is parsed but not fully implemented
-- Spanning cell extraction works but may need refinement for complex layouts
-- Some PDFs without drawn ruling lines require stream mode (this is expected behavior)
+- PDFs without drawn ruling lines require stream mode (lattice mode needs visible cell borders)
