@@ -88,7 +88,7 @@ module Tabula
         opts.separator ""
         opts.separator "Options:"
 
-        opts.on("-a", "--area AREA", "Extraction area (top,left,bottom,right or %)") do |v|
+        opts.on("-a", "--area AREA", "Extraction area (top,left,bottom,right in points)") do |v|
           @options[:area] = parse_area(v)
         end
 
@@ -148,19 +148,12 @@ module Tabula
 
       parts.each_with_index do |p, idx|
         labels = %w[top left bottom right]
-        clean_value = p.end_with?("%") ? p.chomp("%") : p
-        unless clean_value.match?(/\A-?\d+(\.\d+)?\z/)
+        unless p.match?(/\A-?\d+(\.\d+)?\z/)
           raise Tabula::InvalidOptionsError, "Area #{labels[idx]} must be numeric, got '#{p}'"
         end
       end
 
-      parts.map do |p|
-        if p.end_with?("%")
-          { percent: p.to_f }
-        else
-          p.to_f
-        end
-      end
+      parts.map(&:to_f)
     end
 
     def parse_pages(value)
@@ -252,22 +245,12 @@ module Tabula
       options[:pages] = @options[:pages] if @options[:pages]
 
       # Set area
-      if @options[:area]
-        options[:area] = resolve_area(@options[:area])
-      end
+      options[:area] = @options[:area] if @options[:area]
 
       # Set columns
       options[:columns] = @options[:columns] if @options[:columns]
 
       options
-    end
-
-    def resolve_area(area)
-      # If any values are percentages, we'd need page dimensions
-      # For now, just treat them as absolute values
-      area.map do |v|
-        v.is_a?(Hash) ? v[:percent] : v
-      end
     end
 
     def write_tables(tables, output_io)
