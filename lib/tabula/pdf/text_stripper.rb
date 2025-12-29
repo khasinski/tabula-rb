@@ -52,6 +52,9 @@ module Tabula
         width = run.width
         height = run.font_size
 
+        # Detect text direction from Unicode character properties
+        direction = rtl_text?(run.text) ? TextElement::DIRECTION_RTL : TextElement::DIRECTION_LTR
+
         element = TextElement.new(
           top: top,
           left: left,
@@ -60,7 +63,8 @@ module Tabula
           text: run.text,
           font_name: nil, # pdf-reader doesn't expose font name in runs
           font_size: run.font_size,
-          width_of_space: estimate_space_width(run)
+          width_of_space: estimate_space_width(run),
+          direction: direction
         )
 
         @text_elements << element
@@ -112,6 +116,38 @@ module Tabula
     def estimate_space_width(run)
       # Approximate space width as 0.25 of font size (common for proportional fonts)
       run.font_size * 0.25
+    end
+
+    # Detect if text contains RTL (right-to-left) characters
+    # Uses Unicode ranges for Arabic, Hebrew, and other RTL scripts
+    def rtl_text?(text)
+      return false if text.nil? || text.empty?
+
+      text.each_char do |char|
+        code = char.ord
+
+        # Arabic (0600-06FF, 0750-077F, 08A0-08FF, FB50-FDFF, FE70-FEFF)
+        return true if code >= 0x0600 && code <= 0x06FF
+        return true if code >= 0x0750 && code <= 0x077F
+        return true if code >= 0x08A0 && code <= 0x08FF
+        return true if code >= 0xFB50 && code <= 0xFDFF
+        return true if code >= 0xFE70 && code <= 0xFEFF
+
+        # Hebrew (0590-05FF, FB1D-FB4F)
+        return true if code >= 0x0590 && code <= 0x05FF
+        return true if code >= 0xFB1D && code <= 0xFB4F
+
+        # Syriac (0700-074F)
+        return true if code >= 0x0700 && code <= 0x074F
+
+        # Thaana (0780-07BF)
+        return true if code >= 0x0780 && code <= 0x07BF
+
+        # N'Ko (07C0-07FF)
+        return true if code >= 0x07C0 && code <= 0x07FF
+      end
+
+      false
     end
   end
 end

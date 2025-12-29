@@ -73,6 +73,7 @@ module Tabula
         chunks = []
         current_chunk = nil
 
+        # Sort by top first, then by left (RTL sorting handled in text assembly)
         sorted = elements.reject(&:whitespace?).sort_by { |e| [e.top, e.left] }
 
         sorted.each do |element|

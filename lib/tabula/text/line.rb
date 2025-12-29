@@ -29,9 +29,28 @@ module Tabula
     end
 
     # Get chunks sorted by horizontal position
+    # Respects RTL text direction when most chunks are RTL
     # @return [Array<TextChunk>] sorted chunks
     def sorted_chunks
-      @chunks.sort_by(&:left)
+      if rtl_dominant?
+        @chunks.sort_by(&:left).reverse
+      else
+        @chunks.sort_by(&:left)
+      end
+    end
+
+    # Check if this line is LTR dominant
+    def ltr_dominant?
+      return true if @chunks.empty?
+
+      ltr_count = @chunks.count(&:ltr_dominant?)
+      rtl_count = @chunks.count(&:rtl_dominant?)
+      ltr_count >= rtl_count
+    end
+
+    # Check if this line is RTL dominant
+    def rtl_dominant?
+      !ltr_dominant?
     end
 
     # Get the combined text of all chunks

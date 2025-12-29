@@ -41,8 +41,19 @@ module Tabula
     # @param normalize [Boolean] whether to normalize whitespace
     # @return [String] the text content
     def text(normalize: true)
-      raw = @elements.map(&:text).join
+      # Sort elements based on text direction
+      sorted = if ltr_dominant?
+                 @elements.sort_by(&:left)
+               else
+                 @elements.sort_by(&:left).reverse
+               end
+      raw = sorted.map(&:text).join
       normalize ? raw.gsub(/\s+/, " ").strip : raw
+    end
+
+    # Check if this chunk is RTL dominant
+    def rtl_dominant?
+      !ltr_dominant?
     end
 
     # Get width of space character for this chunk
