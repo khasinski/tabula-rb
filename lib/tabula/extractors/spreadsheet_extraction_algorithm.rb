@@ -59,20 +59,26 @@ module Tabula
 
       def find_cells(horizontal_rulings, vertical_rulings)
         cells = []
+        tolerance = Tabula.configuration.cell_tolerance
 
         # Find intersection points
         intersections = build_intersection_map(horizontal_rulings, vertical_rulings)
         return cells if intersections.empty?
 
-        # Get unique x and y positions
+        # Get unique x and y positions from intersections
         x_positions = intersections.keys.map { |x, _| x }.uniq.sort
         y_positions = intersections.keys.map { |_, y| y }.uniq.sort
 
-        # Find cells by checking for rectangular intersections
+        return cells if y_positions.size < 2 || x_positions.size < 2
+
+        # Find cells by checking for corners OR edges
         y_positions.each_cons(2) do |top, bottom|
           x_positions.each_cons(2) do |left, right|
-            # Check if all four corners have intersections
-            if valid_cell?(left, right, top, bottom, intersections)
+            # First try corner-based validation (more precise)
+            if valid_cell_by_corners?(left, right, top, bottom, intersections, tolerance)
+              cells << Cell.new(top, left, right - left, bottom - top)
+            # Fall back to edge-based validation (handles some spanning cells)
+            elsif valid_cell_by_edges?(left, right, top, bottom, horizontal_rulings, vertical_rulings, tolerance)
               cells << Cell.new(top, left, right - left, bottom - top)
             end
           end
@@ -100,9 +106,7 @@ module Tabula
         intersections
       end
 
-      def valid_cell?(left, right, top, bottom, intersections)
-        tolerance = 2.0
-
+      def valid_cell_by_corners?(left, right, top, bottom, intersections, tolerance)
         corners = [
           [left, top],
           [right, top],
@@ -111,11 +115,43 @@ module Tabula
         ]
 
         corners.all? do |x, y|
-          # Check with tolerance
           intersections.keys.any? do |ix, iy|
             (x - ix).abs <= tolerance && (y - iy).abs <= tolerance
           end
         end
+      end
+
+      # Check if there are rulings that form the edges of a potential cell
+      def valid_cell_by_edges?(left, right, top, bottom, horizontal_rulings, vertical_rulings, tolerance)
+        # Check for top edge (horizontal ruling at top that covers left to right)
+        has_top = horizontal_rulings.any? do |h|
+          (h.y1 - top).abs <= tolerance &&
+            h.x1 <= left + tolerance &&
+            h.x2 >= right - tolerance
+        end
+
+        # Check for bottom edge
+        has_bottom = horizontal_rulings.any? do |h|
+          (h.y1 - bottom).abs <= tolerance &&
+            h.x1 <= left + tolerance &&
+            h.x2 >= right - tolerance
+        end
+
+        # Check for left edge (vertical ruling at left that covers top to bottom)
+        has_left = vertical_rulings.any? do |v|
+          (v.x1 - left).abs <= tolerance &&
+            v.y1 <= top + tolerance &&
+            v.y2 >= bottom - tolerance
+        end
+
+        # Check for right edge
+        has_right = vertical_rulings.any? do |v|
+          (v.x1 - right).abs <= tolerance &&
+            v.y1 <= top + tolerance &&
+            v.y2 >= bottom - tolerance
+        end
+
+        has_top && has_bottom && has_left && has_right
       end
 
       def find_spreadsheet_areas(cells)
