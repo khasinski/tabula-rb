@@ -96,10 +96,26 @@ module Tabula
     end
 
     def process_page(pdf_page, page_number)
-      # Get page dimensions
+      # Get page boxes
       media_box = pdf_page.attributes[:MediaBox]
-      page_width = media_box[2].to_f - media_box[0].to_f
-      page_height = media_box[3].to_f - media_box[1].to_f
+      crop_box = pdf_page.attributes[:CropBox]
+      has_crop_box = !crop_box.nil?
+      crop_box ||= media_box
+
+      # Calculate MediaBox dimensions (always positive)
+      media_height = (media_box[3].to_f - media_box[1].to_f).abs
+
+      # Detect if Y-axis is inverted (negative height in MediaBox)
+      y_inverted = media_box[3].to_f < media_box[1].to_f
+
+      # Calculate CropBox dimensions and offsets
+      crop_left = [crop_box[0].to_f, crop_box[2].to_f].min
+      crop_bottom = [crop_box[1].to_f, crop_box[3].to_f].min
+      crop_right = [crop_box[0].to_f, crop_box[2].to_f].max
+      crop_top = [crop_box[1].to_f, crop_box[3].to_f].max
+
+      page_width = crop_right - crop_left
+      page_height = crop_top - crop_bottom
 
       # Handle rotation
       rotation = pdf_page.attributes[:Rotate] || 0
@@ -112,7 +128,13 @@ module Tabula
       text_elements = stripper.extract
 
       # Extract rulings
-      rulings = extract_rulings(pdf_page, page_height)
+      rulings = extract_rulings(pdf_page, media_height, y_inverted: y_inverted)
+
+      # Only transform coordinates if there's a CropBox that differs from MediaBox
+      if has_crop_box
+        text_elements = transform_to_crop_space(text_elements, media_height, crop_left, crop_bottom, crop_top, y_inverted)
+        rulings = transform_rulings_to_crop_space(rulings, media_height, crop_left, crop_bottom, crop_top, y_inverted)
+      end
 
       # Build page object
       Page::Builder.new
@@ -129,26 +151,66 @@ module Tabula
                    .build
     end
 
-    def extract_rulings(pdf_page, page_height)
-      receiver = RulingReceiver.new(page_height)
+    def extract_rulings(pdf_page, page_height, y_inverted:)
+      receiver = RulingReceiver.new(page_height, y_inverted: y_inverted)
       pdf_page.walk(receiver)
       receiver.rulings
+    end
+
+    def transform_to_crop_space(text_elements, media_height, crop_left, crop_bottom, crop_top, y_inverted)
+      # Transform text element coordinates from MediaBox to CropBox space
+      text_elements.map do |te|
+        # Calculate Y offset in top-left coordinate system
+        # In MediaBox space: top of crop area is at (media_height - crop_top)
+        y_offset = media_height - crop_top
+        new_top = te.top - y_offset
+        new_left = te.left - crop_left
+
+        TextElement.new(
+          top: new_top,
+          left: new_left,
+          width: te.width,
+          height: te.height,
+          text: te.text,
+          font_name: te.font_name,
+          font_size: te.font_size,
+          width_of_space: te.width_of_space
+        )
+      end
+    end
+
+    def transform_rulings_to_crop_space(rulings, media_height, crop_left, crop_bottom, crop_top, y_inverted)
+      # Transform ruling coordinates from MediaBox to CropBox space
+      y_offset = media_height - crop_top
+
+      rulings.map do |r|
+        new_y1 = r.y1 - y_offset
+        new_y2 = r.y2 - y_offset
+        new_x1 = r.x1 - crop_left
+        new_x2 = r.x2 - crop_left
+
+        Ruling.new(new_x1, new_y1, new_x2, new_y2)
+      end
     end
 
     # Receiver for extracting ruling lines from PDF graphics
     class RulingReceiver
       attr_reader :rulings
 
-      def initialize(page_height)
+      def initialize(page_height, y_inverted: false)
         @page_height = page_height
+        @y_inverted = y_inverted
         @rulings = []
         @current_path = []
+        @subpaths = [] # Collect all subpaths for filling
         @ctm = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
         @graphics_state_stack = []
       end
 
       # Path construction
       def begin_new_subpath(x, y)
+        # Save current subpath if it has content
+        @subpaths << @current_path.dup if @current_path.any?
         @current_path = [[transform_point(x, y), :move]]
       end
 
@@ -179,13 +241,31 @@ module Tabula
       end
 
       def fill_path_with_nonzero
-        extract_lines_from_path
+        # Include current path
+        @subpaths << @current_path.dup if @current_path.any?
+
+        # Process all subpaths
+        @subpaths.each do |subpath|
+          @current_path = subpath
+          extract_rulings_from_filled_path
+        end
+
         @current_path = []
+        @subpaths = []
       end
 
       def fill_path_with_even_odd
-        extract_lines_from_path
+        # Include current path
+        @subpaths << @current_path.dup if @current_path.any?
+
+        # Process all subpaths
+        @subpaths.each do |subpath|
+          @current_path = subpath
+          extract_rulings_from_filled_path
+        end
+
         @current_path = []
+        @subpaths = []
       end
 
       def close_and_stroke_path
@@ -228,8 +308,12 @@ module Tabula
       def transform_point(x, y)
         tx = @ctm[0][0] * x + @ctm[1][0] * y + @ctm[2][0]
         ty = @ctm[0][1] * x + @ctm[1][1] * y + @ctm[2][1]
-        # Convert to top-left origin
-        [@page_height - ty, tx]
+        # Convert to top-left origin, handling inverted coordinate systems
+        if @y_inverted
+          [ty.abs, tx]
+        else
+          [@page_height - ty, tx]
+        end
       end
 
       def extract_lines_from_path
@@ -245,6 +329,38 @@ module Tabula
           ruling = Ruling.new(x1, y1, x2, y2)
           @rulings << ruling unless ruling.oblique?
         end
+      end
+
+      def extract_rulings_from_filled_path
+        return if @current_path.size < 4
+
+        # Get bounding box of the path
+        points = @current_path.map { |p, _| p }
+        y_coords = points.map { |p| p[0] }
+        x_coords = points.map { |p| p[1] }
+
+        min_y = y_coords.min
+        max_y = y_coords.max
+        min_x = x_coords.min
+        max_x = x_coords.max
+
+        width = max_x - min_x
+        height = max_y - min_y
+
+        # Threshold for considering a filled rectangle as a ruling line
+        # If one dimension is much smaller than the other, treat it as a line
+        ruling_threshold = 8.0
+
+        if height <= ruling_threshold && width > ruling_threshold
+          # Horizontal ruling
+          mid_y = (min_y + max_y) / 2.0
+          @rulings << Ruling.new(min_x, mid_y, max_x, mid_y)
+        elsif width <= ruling_threshold && height > ruling_threshold
+          # Vertical ruling
+          mid_x = (min_x + max_x) / 2.0
+          @rulings << Ruling.new(mid_x, min_y, mid_x, max_y)
+        end
+        # Otherwise, ignore (it's a filled area, not a line)
       end
 
       def matrix_multiply(a, b)

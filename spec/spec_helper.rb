@@ -43,5 +43,80 @@ end
 
 # Helper to load fixture PDF
 def fixture_pdf(name)
-  fixture_path("#{name}.pdf")
+  fixture_path("pdf/#{name}.pdf")
+end
+
+# Helper to load expected CSV
+def fixture_csv(name)
+  path = fixture_path("csv/#{name}.csv")
+  File.read(path, encoding: "UTF-8")
+end
+
+# Helper to load expected JSON
+def fixture_json(name)
+  path = fixture_path("json/#{name}.json")
+  File.read(path, encoding: "UTF-8")
+end
+
+# Test utilities matching tabula-java's UtilsForTesting
+module TestUtils
+  extend self
+
+  # Get an area from the first page of a PDF
+  # @param path [String] path to PDF
+  # @param top [Float] top coordinate
+  # @param left [Float] left coordinate
+  # @param bottom [Float] bottom coordinate
+  # @param right [Float] right coordinate
+  # @return [Tabula::Page] page area
+  def get_area_from_first_page(path, top, left, bottom, right)
+    get_area_from_page(path, 1, top, left, bottom, right)
+  end
+
+  # Get an area from a specific page of a PDF
+  # @param path [String] path to PDF
+  # @param page_number [Integer] page number (1-indexed)
+  # @param top [Float] top coordinate
+  # @param left [Float] left coordinate
+  # @param bottom [Float] bottom coordinate
+  # @param right [Float] right coordinate
+  # @return [Tabula::Page] page area
+  def get_area_from_page(path, page_number, top, left, bottom, right)
+    page = get_page(path, page_number)
+    page.get_area(top, left, bottom, right)
+  end
+
+  # Get a specific page from a PDF
+  # @param path [String] path to PDF
+  # @param page_number [Integer] page number (1-indexed)
+  # @return [Tabula::Page] page
+  def get_page(path, page_number)
+    extractor = Tabula::ObjectExtractor.new(path)
+    extractor.extract_page(page_number)
+  end
+
+  # Convert table to array of rows (array of arrays of strings)
+  # @param table [Tabula::Table] table
+  # @return [Array<Array<String>>] 2D string array
+  def table_to_array_of_rows(table)
+    table.rows.map do |row|
+      row.map { |cell| cell.text }
+    end
+  end
+
+  # Load CSV fixture content with normalized line endings
+  # @param path [String] path to CSV file
+  # @return [String] CSV content
+  def load_csv(path)
+    content = File.read(path, encoding: "UTF-8")
+    # Normalize to CRLF like Java version
+    content.gsub(/(?<!\r)\n/, "\r")
+  end
+
+  # Load JSON fixture content
+  # @param path [String] path to JSON file
+  # @return [String] JSON content
+  def load_json(path)
+    File.read(path, encoding: "UTF-8")
+  end
 end

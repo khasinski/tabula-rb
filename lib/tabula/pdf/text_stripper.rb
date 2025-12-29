@@ -34,7 +34,16 @@ module Tabula
 
       def initialize(page)
         @page = page
-        @page_height = page.attributes[:MediaBox][3].to_f
+
+        # Get page box and handle inverted coordinate systems
+        box = page.attributes[:CropBox] || page.attributes[:MediaBox]
+        @min_y = [box[1].to_f, box[3].to_f].min
+        @max_y = [box[1].to_f, box[3].to_f].max
+        @page_height = @max_y - @min_y
+
+        # Detect if Y-axis is inverted (negative height in box)
+        @y_inverted = box[3].to_f < box[1].to_f
+
         @text_elements = []
         @min_char_width = Float::INFINITY
         @min_char_height = Float::INFINITY
@@ -118,7 +127,15 @@ module Tabula
 
         # Calculate position in page coordinates
         x = text_rendering_matrix[2][0]
-        y = @page_height - text_rendering_matrix[2][1] # Convert to top-left origin
+        raw_y = text_rendering_matrix[2][1]
+
+        # Convert to top-left origin, handling inverted coordinate systems
+        if @y_inverted
+          # When Y is inverted, the raw_y is already measured from top
+          y = raw_y.abs
+        else
+          y = @page_height - raw_y
+        end
 
         # Estimate character dimensions
         font_size = @current_font_size || 12.0

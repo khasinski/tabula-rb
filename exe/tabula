@@ -4,4 +4,4 @@
 require "tabula"
 require "tabula/cli"
 
-Tabula::CLI.run(ARGV)
+exit Tabula::CLI.run(ARGV)

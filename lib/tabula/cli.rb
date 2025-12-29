@@ -158,13 +158,15 @@ module Tabula
 
     def process_files(files)
       output_io = @options[:output] ? File.open(@options[:output], "w") : $stdout
+      had_error = false
 
       begin
         files.each_with_index do |file, idx|
           output_io.puts if idx.positive? # Separate multiple files
 
           unless File.exist?(file)
-            warn "Warning: File not found: #{file}"
+            warn "Error: File not found: #{file}"
+            had_error = true
             next
           end
 
@@ -174,7 +176,7 @@ module Tabula
         output_io.close if @options[:output]
       end
 
-      0
+      had_error ? 1 : 0
     end
 
     def process_file(file, output_io)

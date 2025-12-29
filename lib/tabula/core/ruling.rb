@@ -105,6 +105,19 @@ module Tabula
       [x1, x2].max
     end
 
+    def width
+      right - left
+    end
+
+    def height
+      bottom - top
+    end
+
+    # Get bounding rectangle
+    def bounds
+      Rectangle.new(top, left, width, height)
+    end
+
     # Get start and end points as Point objects
     def p1
       Point.new(x1, y1)
