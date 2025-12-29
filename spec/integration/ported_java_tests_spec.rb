@@ -397,8 +397,8 @@ RSpec.describe "Ported Java Tests" do
       it "prevents column merging with vertical rulings" do
         page = TestUtils.get_page(fixture_pdf("campaign_donors"), 1)
 
-        # Get vertical rulings
-        v_rulings = page.vertical_rulings
+        # Verify page has vertical rulings that can prevent merging
+        expect(page.vertical_rulings).to be_an(Array)
 
         # Extract with rulings to prevent merging
         extractor = Tabula::Extractors::Basic.new

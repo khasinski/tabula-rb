@@ -37,7 +37,7 @@ RSpec.describe "CLI" do
 
     it "extracts with lattice mode" do
       pdf_path = fixture_pdf("us-017")
-      stdout, _stderr, status = Open3.capture3(
+      _stdout, _stderr, status = Open3.capture3(
         "#{bundle_cmd} #{cli_path} -l -p 2 #{pdf_path}"
       )
 
@@ -46,7 +46,7 @@ RSpec.describe "CLI" do
 
     it "extracts with stream mode" do
       pdf_path = fixture_pdf("us-017")
-      stdout, _stderr, status = Open3.capture3(
+      _stdout, _stderr, status = Open3.capture3(
         "#{bundle_cmd} #{cli_path} -t -p 2 #{pdf_path}"
       )
 
@@ -68,7 +68,7 @@ RSpec.describe "CLI" do
 
     it "outputs TSV format" do
       pdf_path = fixture_pdf("us-017")
-      stdout, _stderr, status = Open3.capture3(
+      _stdout, _stderr, status = Open3.capture3(
         "#{bundle_cmd} #{cli_path} -f TSV -l -p 2 #{pdf_path}"
       )
 
@@ -87,7 +87,7 @@ RSpec.describe "CLI" do
     end
 
     it "requires PDF file argument" do
-      _stdout, stderr, status = Open3.capture3(
+      _stdout, _stderr, status = Open3.capture3(
         "#{bundle_cmd} #{cli_path}"
       )
 
@@ -157,7 +157,7 @@ RSpec.describe "CLI" do
   describe "page selection" do
     it "extracts specific pages" do
       pdf_path = fixture_pdf("S2MNCEbirdisland")
-      stdout, _stderr, status = Open3.capture3(
+      _stdout, _stderr, status = Open3.capture3(
         "#{bundle_cmd} #{cli_path} -p 1,2 #{pdf_path}"
       )
 
@@ -166,7 +166,7 @@ RSpec.describe "CLI" do
 
     it "extracts page range" do
       pdf_path = fixture_pdf("S2MNCEbirdisland")
-      stdout, _stderr, status = Open3.capture3(
+      _stdout, _stderr, status = Open3.capture3(
         "#{bundle_cmd} #{cli_path} -p 1-2 #{pdf_path}"
       )
 
@@ -175,7 +175,7 @@ RSpec.describe "CLI" do
 
     it "extracts all pages" do
       pdf_path = fixture_pdf("S2MNCEbirdisland")
-      stdout, _stderr, status = Open3.capture3(
+      _stdout, _stderr, status = Open3.capture3(
         "#{bundle_cmd} #{cli_path} -p all #{pdf_path}"
       )
 

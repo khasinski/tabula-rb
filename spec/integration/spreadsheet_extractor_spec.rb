@@ -15,12 +15,15 @@ RSpec.describe Tabula::Extractors::Spreadsheet do
 
     it "extracts tables with spanning cells" do
       page = TestUtils.get_page(fixture_pdf("spanning_cells"), 1)
-      extractor = described_class.new
 
       # This PDF has tables with spanning cells which is more complex
       # Verify we can at least detect rulings from filled rectangles
       expect(page.horizontal_rulings.count).to be > 0
       expect(page.vertical_rulings.count).to be > 0
+
+      # Also verify extraction works
+      tables = described_class.new.extract(page)
+      expect(tables).not_to be_empty
     end
 
     it "handles incomplete grid" do
