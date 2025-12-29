@@ -23,12 +23,12 @@ module Tabula
       private
 
       def escape_value(value)
-        return "" if value.nil?
+        return '' if value.nil?
 
         value.to_s
-             .gsub("\t", "\\t")
-             .gsub("\n", "\\n")
-             .gsub("\r", "\\r")
+             .gsub("\t", '\\t')
+             .gsub("\n", '\\n')
+             .gsub("\r", '\\r')
       end
     end
   end

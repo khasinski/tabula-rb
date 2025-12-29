@@ -17,10 +17,6 @@ module Tabula
       # Overlap threshold for duplicate detection
       OVERLAP_THRESHOLD = 0.9
 
-      def initialize(**options)
-        super
-      end
-
       # Detect table areas on a page
       # @param page [Page] page to detect tables on
       # @return [Array<Rectangle>] detected table areas
@@ -36,9 +32,7 @@ module Tabula
 
         # Merge results, removing duplicates
         text_tables.each do |text_table|
-          unless overlaps_existing?(text_table, tables)
-            tables << text_table
-          end
+          tables << text_table unless overlaps_existing?(text_table, tables)
         end
 
         tables
@@ -75,7 +69,7 @@ module Tabula
             edges[EDGE_LEFT] << TextEdge.new(chunk.left, line.top, line.bottom, EDGE_LEFT)
 
             # Center edge
-            center = chunk.left + chunk.width / 2.0
+            center = chunk.left + (chunk.width / 2.0)
             edges[EDGE_MID] << TextEdge.new(center, line.top, line.bottom, EDGE_MID)
 
             # Right edge

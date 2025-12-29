@@ -17,7 +17,7 @@ module Tabula
       # @param options [Hash] writer-specific options
       # @return [String] formatted output
       def self.to_string(tables, **options)
-        require "stringio"
+        require 'stringio'
         io = StringIO.new
         write(tables, io, **options)
         io.string
@@ -32,7 +32,7 @@ module Tabula
       # @param tables [Array<Table>] tables to write
       # @param io [IO] output destination
       def write(tables, io)
-        raise NotImplementedError, "Subclasses must implement #write"
+        raise NotImplementedError, 'Subclasses must implement #write'
       end
     end
   end

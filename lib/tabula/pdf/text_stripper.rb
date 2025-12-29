@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "pdf-reader"
+require 'pdf-reader'
 
 module Tabula
   # Extracts text elements from PDF pages using pdf-reader.
@@ -40,7 +40,7 @@ module Tabula
         # pdf-reader already applies rotation transformation
         # For rotated pages, y coordinates are negative
         # For non-rotated pages, we need to flip from bottom-origin to top-origin
-        if rotation == 90 || rotation == 270
+        if [90, 270].include?(rotation)
           # Rotated pages: y is negative, convert to positive
           top = run.y.abs
         else
@@ -70,12 +70,8 @@ module Tabula
 
         @text_elements << element
 
-        if width.positive?
-          @min_char_width = [@min_char_width, width].min
-        end
-        if height.positive?
-          @min_char_height = [@min_char_height, height].min
-        end
+        @min_char_width = [@min_char_width, width].min if width.positive?
+        @min_char_height = [@min_char_height, height].min if height.positive?
       end
 
       @text_elements
@@ -107,7 +103,7 @@ module Tabula
         return false if code == 0xFFFD
 
         # Filter null character
-        return false if code == 0x00
+        return false if code.zero?
       end
 
       true
@@ -128,24 +124,24 @@ module Tabula
         code = char.ord
 
         # Arabic (0600-06FF, 0750-077F, 08A0-08FF, FB50-FDFF, FE70-FEFF)
-        return true if code >= 0x0600 && code <= 0x06FF
-        return true if code >= 0x0750 && code <= 0x077F
-        return true if code >= 0x08A0 && code <= 0x08FF
-        return true if code >= 0xFB50 && code <= 0xFDFF
-        return true if code >= 0xFE70 && code <= 0xFEFF
+        return true if code.between?(0x0600, 0x06FF)
+        return true if code.between?(0x0750, 0x077F)
+        return true if code.between?(0x08A0, 0x08FF)
+        return true if code.between?(0xFB50, 0xFDFF)
+        return true if code.between?(0xFE70, 0xFEFF)
 
         # Hebrew (0590-05FF, FB1D-FB4F)
-        return true if code >= 0x0590 && code <= 0x05FF
-        return true if code >= 0xFB1D && code <= 0xFB4F
+        return true if code.between?(0x0590, 0x05FF)
+        return true if code.between?(0xFB1D, 0xFB4F)
 
         # Syriac (0700-074F)
-        return true if code >= 0x0700 && code <= 0x074F
+        return true if code.between?(0x0700, 0x074F)
 
         # Thaana (0780-07BF)
-        return true if code >= 0x0780 && code <= 0x07BF
+        return true if code.between?(0x0780, 0x07BF)
 
         # N'Ko (07C0-07FF)
-        return true if code >= 0x07C0 && code <= 0x07FF
+        return true if code.between?(0x07C0, 0x07FF)
       end
 
       false

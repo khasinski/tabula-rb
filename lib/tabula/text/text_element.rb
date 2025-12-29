@@ -97,9 +97,7 @@ module Tabula
         return false unless chunk.vertically_overlaps?(element)
 
         # Check if there's a vertical ruling between them
-        if vertical_rulings.any? { |r| ruling_between?(chunk, element, r) }
-          return false
-        end
+        return false if vertical_rulings.any? { |r| ruling_between?(chunk, element, r) }
 
         # Check horizontal gap
         gap = element.left - chunk.right

@@ -134,7 +134,7 @@ module Tabula
 
         # Assign each chunk to a column
         line.sorted_chunks.each do |chunk|
-          chunk_center = chunk.left + chunk.width / 2.0
+          chunk_center = chunk.left + (chunk.width / 2.0)
           col_idx = find_column_index(chunk_center, boundaries)
           columns[col_idx] << chunk
         end

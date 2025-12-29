@@ -11,10 +11,6 @@ module Tabula
       # Magic heuristic for determining tabular content
       TABULAR_RATIO_THRESHOLD = 0.65
 
-      def initialize(**options)
-        super
-      end
-
       # Extract tables from a page
       # @param page [Page] page to extract from
       # @return [Array<Table>]
@@ -51,7 +47,7 @@ module Tabula
         # Check if tables have reasonable structure
         tables.any? do |table|
           ratio = table.row_count.to_f / table.col_count
-          ratio >= TABULAR_RATIO_THRESHOLD && ratio <= (1.0 / TABULAR_RATIO_THRESHOLD)
+          ratio.between?(TABULAR_RATIO_THRESHOLD, 1.0 / TABULAR_RATIO_THRESHOLD)
         end
       end
 
@@ -191,7 +187,7 @@ module Tabula
 
           # Filter out small regions
           bbox = Rectangle.bounding_box_of(region)
-          cell_groups << region if bbox.area > 0
+          cell_groups << region if bbox.area.positive?
         end
 
         cell_groups

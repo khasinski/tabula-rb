@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "optparse"
+require 'optparse'
 
 module Tabula
   # Command-line interface for tabula
@@ -30,7 +30,7 @@ module Tabula
       end
 
       if files.empty?
-        warn "Error: No PDF file specified"
+        warn 'Error: No PDF file specified'
         warn parser
         return 1
       end
@@ -42,18 +42,18 @@ module Tabula
       1
     rescue Tabula::FileNotFoundError => e
       warn "Error: #{e.message}"
-      warn "Please check that the file path is correct and the file exists."
+      warn 'Please check that the file path is correct and the file exists.'
       1
     rescue Tabula::InvalidOptionsError => e
       warn "Error: Invalid option - #{e.message}"
-      warn "Use --help to see available options and their valid values."
+      warn 'Use --help to see available options and their valid values.'
       1
     rescue Tabula::InvalidPDFError => e
       warn "Error: Invalid PDF file - #{e.message}"
       1
     rescue Tabula::PasswordRequiredError => e
       warn "Error: PDF is password protected - #{e.message}"
-      warn "Use the -s/--password option to provide the password."
+      warn 'Use the -s/--password option to provide the password.'
       1
     rescue StandardError => e
       warn "Error: #{e.message}"
@@ -67,7 +67,7 @@ module Tabula
       {
         area: nil,
         columns: nil,
-        format: "CSV",
+        format: 'CSV',
         guess: false,
         lattice: false,
         stream: false,
@@ -82,66 +82,66 @@ module Tabula
 
     def build_parser
       OptionParser.new do |opts|
-        opts.banner = "Usage: tabula [OPTIONS] <pdf_file> [<pdf_file> ...]"
-        opts.separator ""
-        opts.separator "Extract tables from PDF files"
-        opts.separator ""
-        opts.separator "Options:"
+        opts.banner = 'Usage: tabula [OPTIONS] <pdf_file> [<pdf_file> ...]'
+        opts.separator ''
+        opts.separator 'Extract tables from PDF files'
+        opts.separator ''
+        opts.separator 'Options:'
 
-        opts.on("-a", "--area AREA", "Extraction area (top,left,bottom,right in points)") do |v|
+        opts.on('-a', '--area AREA', 'Extraction area (top,left,bottom,right in points)') do |v|
           @options[:area] = parse_area(v)
         end
 
-        opts.on("-c", "--columns COLUMNS", "Column boundaries (comma-separated x coordinates)") do |v|
-          @options[:columns] = v.split(",").map(&:to_f)
+        opts.on('-c', '--columns COLUMNS', 'Column boundaries (comma-separated x coordinates)') do |v|
+          @options[:columns] = v.split(',').map(&:to_f)
         end
 
-        opts.on("-f", "--format FORMAT", FORMATS, "Output format: #{FORMATS.join(', ')} (default: CSV)") do |v|
+        opts.on('-f', '--format FORMAT', FORMATS, "Output format: #{FORMATS.join(', ')} (default: CSV)") do |v|
           @options[:format] = v.upcase
         end
 
-        opts.on("-g", "--guess", "Guess table areas (use detection algorithm)") do
+        opts.on('-g', '--guess', 'Guess table areas (use detection algorithm)') do
           @options[:guess] = true
         end
 
-        opts.on("-l", "--lattice", "Force lattice mode (use ruling lines)") do
+        opts.on('-l', '--lattice', 'Force lattice mode (use ruling lines)') do
           @options[:lattice] = true
           @options[:stream] = false
         end
 
-        opts.on("-t", "--stream", "Force stream mode (use text positions)") do
+        opts.on('-t', '--stream', 'Force stream mode (use text positions)') do
           @options[:stream] = true
           @options[:lattice] = false
         end
 
-        opts.on("-p", "--pages PAGES", "Pages to extract (e.g., '1,2,3' or '1-5' or 'all')") do |v|
+        opts.on('-p', '--pages PAGES', "Pages to extract (e.g., '1,2,3' or '1-5' or 'all')") do |v|
           @options[:pages] = parse_pages(v)
         end
 
-        opts.on("-o", "--output FILE", "Output file (default: stdout)") do |v|
+        opts.on('-o', '--output FILE', 'Output file (default: stdout)') do |v|
           @options[:output] = v
         end
 
-        opts.on("-s", "--password PASSWORD", "PDF password") do |v|
+        opts.on('-s', '--password PASSWORD', 'PDF password') do |v|
           @options[:password] = v
         end
 
-        opts.on("--debug", "Show debug information") do
+        opts.on('--debug', 'Show debug information') do
           @options[:debug] = true
         end
 
-        opts.on("-v", "--version", "Show version") do
+        opts.on('-v', '--version', 'Show version') do
           @options[:version] = true
         end
 
-        opts.on("-h", "--help", "Show this help") do
+        opts.on('-h', '--help', 'Show this help') do
           @options[:help] = true
         end
       end
     end
 
     def parse_area(value)
-      parts = value.split(",").map(&:strip)
+      parts = value.split(',').map(&:strip)
       unless parts.size == 4
         raise Tabula::InvalidOptionsError, "Area must have 4 values: top,left,bottom,right (got #{parts.size} values)"
       end
@@ -157,16 +157,17 @@ module Tabula
     end
 
     def parse_pages(value)
-      return nil if value.downcase == "all"
+      return nil if value.downcase == 'all'
 
       pages = []
-      value.split(",").each do |part|
+      value.split(',').each do |part|
         part = part.strip
-        if part.include?("-")
-          range_parts = part.split("-")
+        if part.include?('-')
+          range_parts = part.split('-')
           unless range_parts.size == 2 && range_parts.all? { |p| p.match?(/\A\d+\z/) }
             raise Tabula::InvalidOptionsError, "Invalid page range: '#{part}'. Use format like '1-5'"
           end
+
           range = range_parts.map(&:to_i)
           if range[0] <= 0 || range[1] <= 0
             raise Tabula::InvalidOptionsError, "Page numbers must be positive integers, got '#{part}'"
@@ -174,15 +175,16 @@ module Tabula
           if range[0] > range[1]
             raise Tabula::InvalidOptionsError, "Invalid page range: '#{part}'. Start must be less than or equal to end"
           end
+
           pages.concat((range[0]..range[1]).to_a)
         else
           unless part.match?(/\A\d+\z/)
             raise Tabula::InvalidOptionsError, "Invalid page number: '#{part}'. Page numbers must be positive integers"
           end
+
           page_num = part.to_i
-          if page_num <= 0
-            raise Tabula::InvalidOptionsError, "Page numbers must be positive integers, got '#{part}'"
-          end
+          raise Tabula::InvalidOptionsError, "Page numbers must be positive integers, got '#{part}'" if page_num <= 0
+
           pages << page_num
         end
       end
@@ -190,7 +192,7 @@ module Tabula
     end
 
     def process_files(files)
-      output_io = @options[:output] ? File.open(@options[:output], "w") : $stdout
+      output_io = @options[:output] ? File.open(@options[:output], 'w') : $stdout
       had_error = false
 
       begin
@@ -199,7 +201,7 @@ module Tabula
 
           unless File.exist?(file)
             warn "Error: File not found: #{file}"
-            warn "Please check that the file path is correct and the file exists."
+            warn 'Please check that the file path is correct and the file exists.'
             had_error = true
             next
           end
@@ -233,13 +235,13 @@ module Tabula
       }
 
       # Set extraction method
-      if @options[:lattice]
-        options[:method] = :lattice
-      elsif @options[:stream]
-        options[:method] = :stream
-      else
-        options[:method] = :auto
-      end
+      options[:method] = if @options[:lattice]
+                           :lattice
+                         elsif @options[:stream]
+                           :stream
+                         else
+                           :auto
+                         end
 
       # Set pages
       options[:pages] = @options[:pages] if @options[:pages]
@@ -255,13 +257,13 @@ module Tabula
 
     def write_tables(tables, output_io)
       case @options[:format]
-      when "CSV"
+      when 'CSV'
         Writers::CSVWriter.new.write(tables, output_io)
-      when "TSV"
+      when 'TSV'
         Writers::TSVWriter.new.write(tables, output_io)
-      when "JSON"
+      when 'JSON'
         Writers::JSONWriter.new(pretty: true).write(tables, output_io)
-      when "MARKDOWN"
+      when 'MARKDOWN'
         Writers::MarkdownWriter.new.write(tables, output_io)
       end
     end

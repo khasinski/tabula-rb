@@ -79,7 +79,7 @@ module Tabula
     end
 
     def center
-      Point.new(left + width / 2.0, top + height / 2.0)
+      Point.new(left + (width / 2.0), top + (height / 2.0))
     end
 
     def bounds
@@ -137,7 +137,7 @@ module Tabula
 
     # Check if this rectangle contains a point
     def contains_point?(point)
-      point.x >= left && point.x <= right && point.y >= top && point.y <= bottom
+      point.x.between?(left, right) && point.y >= top && point.y <= bottom
     end
 
     # Check if this rectangle fully contains another

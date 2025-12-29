@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "csv"
+require 'csv'
 
 module Tabula
   module Writers
@@ -9,7 +9,7 @@ module Tabula
       # @param separator [String] field separator (default: comma)
       # @param quote_char [String] quote character (default: double quote)
       # @param force_quotes [Boolean] always quote fields (default: false)
-      def initialize(separator: ",", quote_char: '"', force_quotes: false, **options)
+      def initialize(separator: ',', quote_char: '"', force_quotes: false, **options)
         super(**options)
         @separator = separator
         @quote_char = quote_char
@@ -39,7 +39,7 @@ module Tabula
       # @param tables [Array<Table>] tables to write
       # @return [String] CSV formatted output
       def self.to_string(tables, **options)
-        require "stringio"
+        require 'stringio'
         io = StringIO.new
         new(**options).write(tables, io)
         io.string

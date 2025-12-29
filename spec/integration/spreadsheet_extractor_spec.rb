@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 RSpec.describe Tabula::Extractors::Spreadsheet do
-  describe "#extract" do
-    it "detects table cells from ruling lines" do
+  describe '#extract' do
+    it 'detects table cells from ruling lines' do
       page = TestUtils.get_area_from_first_page(
-        fixture_pdf("argentina_diputados_voting_record"),
+        fixture_pdf('argentina_diputados_voting_record'),
         269.875, 12.75, 790.5, 561
       )
 
@@ -13,8 +13,8 @@ RSpec.describe Tabula::Extractors::Spreadsheet do
       expect { extractor.extract(page) }.not_to raise_error
     end
 
-    it "extracts tables with spanning cells" do
-      page = TestUtils.get_page(fixture_pdf("spanning_cells"), 1)
+    it 'extracts tables with spanning cells' do
+      page = TestUtils.get_page(fixture_pdf('spanning_cells'), 1)
 
       # This PDF has tables with spanning cells which is more complex
       # Verify we can at least detect rulings from filled rectangles
@@ -26,8 +26,8 @@ RSpec.describe Tabula::Extractors::Spreadsheet do
       expect(tables).not_to be_empty
     end
 
-    it "handles incomplete grid" do
-      page = TestUtils.get_page(fixture_pdf("china"), 1)
+    it 'handles incomplete grid' do
+      page = TestUtils.get_page(fixture_pdf('china'), 1)
       extractor = described_class.new
       tables = extractor.extract(page)
 
@@ -35,8 +35,8 @@ RSpec.describe Tabula::Extractors::Spreadsheet do
       expect(tables.size).to be >= 1 if page.rulings.any?
     end
 
-    it "extracts table from page with ruling lines" do
-      page = TestUtils.get_page(fixture_pdf("us-017"), 2)
+    it 'extracts table from page with ruling lines' do
+      page = TestUtils.get_page(fixture_pdf('us-017'), 2)
       extractor = described_class.new
       tables = extractor.extract(page)
 
@@ -48,17 +48,17 @@ RSpec.describe Tabula::Extractors::Spreadsheet do
       end
     end
 
-    it "merges lines close to each other" do
-      page = TestUtils.get_page(fixture_pdf("20"), 1)
+    it 'merges lines close to each other' do
+      page = TestUtils.get_page(fixture_pdf('20'), 1)
       rulings = page.vertical_rulings
 
       # Should have collapsed close rulings
       expect(rulings).not_to be_empty
     end
 
-    it "handles spreadsheet with no bounding frame" do
+    it 'handles spreadsheet with no bounding frame' do
       page = TestUtils.get_area_from_page(
-        fixture_pdf("spreadsheet_no_bounding_frame"), 1,
+        fixture_pdf('spreadsheet_no_bounding_frame'), 1,
         150.56, 58.9, 654.7, 536.12
       )
       extractor = described_class.new
@@ -70,21 +70,19 @@ RSpec.describe Tabula::Extractors::Spreadsheet do
       end
     end
 
-    it "detects single spreadsheet from offense.pdf" do
+    it 'detects single spreadsheet from offense.pdf' do
       page = TestUtils.get_area_from_page(
-        fixture_pdf("offense"), 1,
+        fixture_pdf('offense'), 1,
         68.08, 16.44, 680.85, 597.84
       )
       extractor = described_class.new
       tables = extractor.extract(page)
 
-      if page.rulings.any?
-        expect(tables.size).to eq(1)
-      end
+      expect(tables.size).to eq(1) if page.rulings.any?
     end
 
-    it "sorts spreadsheets by top and right" do
-      page = TestUtils.get_page(fixture_pdf("sydney_disclosure_contract"), 1)
+    it 'sorts spreadsheets by top and right' do
+      page = TestUtils.get_page(fixture_pdf('sydney_disclosure_contract'), 1)
       extractor = described_class.new
       tables = extractor.extract(page)
 
@@ -96,17 +94,17 @@ RSpec.describe Tabula::Extractors::Spreadsheet do
       end
     end
 
-    it "does not stack overflow in quicksort" do
-      page = TestUtils.get_page(fixture_pdf("failing_sort"), 1)
+    it 'does not stack overflow in quicksort' do
+      page = TestUtils.get_page(fixture_pdf('failing_sort'), 1)
       extractor = described_class.new
 
       expect { extractor.extract(page) }.not_to raise_error
     end
   end
 
-  describe "RTL text support" do
-    it "extracts Arabic text correctly" do
-      page = TestUtils.get_page(fixture_pdf("arabic"), 1)
+  describe 'RTL text support' do
+    it 'extracts Arabic text correctly' do
+      page = TestUtils.get_page(fixture_pdf('arabic'), 1)
       extractor = described_class.new
       tables = extractor.extract(page)
 
@@ -117,8 +115,8 @@ RSpec.describe Tabula::Extractors::Spreadsheet do
       end
     end
 
-    it "extracts real-world RTL content from mednine.pdf" do
-      page = TestUtils.get_page(fixture_pdf("mednine"), 1)
+    it 'extracts real-world RTL content from mednine.pdf' do
+      page = TestUtils.get_page(fixture_pdf('mednine'), 1)
       extractor = described_class.new
       tables = extractor.extract(page)
 
@@ -129,8 +127,8 @@ RSpec.describe Tabula::Extractors::Spreadsheet do
     end
   end
 
-  describe ".find_cells" do
-    it "finds cells from horizontal and vertical rulings" do
+  describe '.find_cells' do
+    it 'finds cells from horizontal and vertical rulings' do
       # Sample rulings (simplified from Java test data)
       horizontal = [
         Tabula::Ruling.new(18, 40, 226, 40),

@@ -8,7 +8,7 @@ module Tabula
 
     # @param extraction_method [String] method used for extraction
     # @param page_number [Integer] page number where table was found
-    def initialize(extraction_method: "unknown", page_number: nil)
+    def initialize(extraction_method: 'unknown', page_number: nil)
       super(0, 0, 0, 0)
       @extraction_method = extraction_method
       @page_number = page_number
@@ -53,20 +53,16 @@ module Tabula
 
     # Get number of rows
     # @return [Integer]
-    def row_count
-      @row_count
-    end
+    attr_reader :row_count
 
     # Get number of columns
     # @return [Integer]
-    def col_count
-      @col_count
-    end
+    attr_reader :col_count
 
     # Get all rows as 2D array
     # @return [Array<Array<Cell>>]
     def rows
-      @memoized_rows ||= compute_rows
+      @rows ||= compute_rows
     end
 
     # Get all cells as flat array
@@ -99,7 +95,7 @@ module Tabula
     # @param options [Hash] options for CSV generation
     # @return [String]
     def to_csv(**options)
-      require "csv"
+      require 'csv'
       CSV.generate(**options) do |csv|
         to_a.each { |row| csv << row }
       end
@@ -128,7 +124,7 @@ module Tabula
     # Convert to JSON string
     # @return [String]
     def to_json(*args)
-      require "json"
+      require 'json'
       to_h.to_json(*args)
     end
 
@@ -140,8 +136,8 @@ module Tabula
 
     # Iterate over rows
     # @yield [Array<Cell>] each row
-    def each_row(&block)
-      rows.each(&block)
+    def each_row(&)
+      rows.each(&)
     end
 
     # Iterate over cells
@@ -173,8 +169,6 @@ module Tabula
 
       result
     end
-
-    public
 
     # Table with ruling lines - extends Table with ruling information
     class WithRulingLines < Table

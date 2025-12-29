@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 RSpec.describe Tabula::Configuration do
-  describe "#initialize" do
-    it "sets default values" do
+  describe '#initialize' do
+    it 'sets default values' do
       config = described_class.new
 
       expect(config.orientation_tolerance).to eq(1.0)
@@ -22,8 +22,8 @@ RSpec.describe Tabula::Configuration do
     end
   end
 
-  describe "#with" do
-    it "creates a copy with overrides" do
+  describe '#with' do
+    it 'creates a copy with overrides' do
       config = described_class.new
       new_config = config.with(min_cells: 6, min_rows: 3)
 
@@ -37,35 +37,35 @@ RSpec.describe Tabula::Configuration do
 end
 
 RSpec.describe Tabula do
-  describe ".configuration" do
-    it "returns the default configuration" do
-      config = Tabula.configuration
+  describe '.configuration' do
+    it 'returns the default configuration' do
+      config = described_class.configuration
       expect(config).to be_a(Tabula::Configuration)
     end
 
-    it "returns the same instance each time" do
-      expect(Tabula.configuration).to be(Tabula.configuration)
+    it 'returns the same instance each time' do
+      expect(described_class.configuration).to be(described_class.configuration)
     end
   end
 
-  describe ".configure" do
-    it "yields the configuration" do
-      Tabula.configure do |config|
+  describe '.configure' do
+    it 'yields the configuration' do
+      described_class.configure do |config|
         expect(config).to be_a(Tabula::Configuration)
       end
     end
 
-    it "allows modifying configuration" do
-      original_tolerance = Tabula.configuration.orientation_tolerance
+    it 'allows modifying configuration' do
+      original_tolerance = described_class.configuration.orientation_tolerance
 
-      Tabula.configure do |config|
+      described_class.configure do |config|
         config.orientation_tolerance = 2.0
       end
 
-      expect(Tabula.configuration.orientation_tolerance).to eq(2.0)
+      expect(described_class.configuration.orientation_tolerance).to eq(2.0)
 
       # Reset for other tests
-      Tabula.configuration.orientation_tolerance = original_tolerance
+      described_class.configuration.orientation_tolerance = original_tolerance
     end
   end
 end

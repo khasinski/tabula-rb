@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe Tabula::ProjectionProfile do
-  describe "horizontal profile" do
+  describe 'horizontal profile' do
     let(:elements) do
       [
         Tabula::Rectangle.new(10, 0, 20, 10),   # 0-20
@@ -12,8 +12,8 @@ RSpec.describe Tabula::ProjectionProfile do
 
     let(:profile) { described_class.new(elements, orientation: :horizontal) }
 
-    describe "#find_gaps" do
-      it "finds gaps between elements" do
+    describe '#find_gaps' do
+      it 'finds gaps between elements' do
         gaps = profile.find_gaps(min_gap_size: 3.0)
         expect(gaps.size).to eq(2)
         expect(gaps[0][0]).to be_between(20, 22)
@@ -21,25 +21,25 @@ RSpec.describe Tabula::ProjectionProfile do
       end
     end
 
-    describe "#gap_midpoints" do
-      it "returns midpoints of gaps" do
+    describe '#gap_midpoints' do
+      it 'returns midpoints of gaps' do
         midpoints = profile.gap_midpoints(min_gap_size: 3.0)
         expect(midpoints.size).to eq(2)
       end
     end
 
-    describe "#in_gap?" do
-      it "returns true for position in gap" do
+    describe '#in_gap?' do
+      it 'returns true for position in gap' do
         expect(profile.in_gap?(22, min_gap_size: 3.0)).to be true
       end
 
-      it "returns false for position in element" do
+      it 'returns false for position in element' do
         expect(profile.in_gap?(10, min_gap_size: 3.0)).to be false
       end
     end
   end
 
-  describe "vertical profile" do
+  describe 'vertical profile' do
     let(:elements) do
       [
         Tabula::Rectangle.new(0, 10, 10, 20),   # y: 0-20
@@ -50,8 +50,8 @@ RSpec.describe Tabula::ProjectionProfile do
 
     let(:profile) { described_class.new(elements, orientation: :vertical) }
 
-    describe "#find_gaps" do
-      it "finds vertical gaps" do
+    describe '#find_gaps' do
+      it 'finds vertical gaps' do
         gaps = profile.find_gaps(min_gap_size: 5.0)
         expect(gaps.size).to eq(2)
       end

@@ -83,7 +83,7 @@ module Tabula
     # Get processed ruling lines (collapsed and cleaned)
     # @return [Array<Ruling>]
     def get_rulings
-      @processed_rulings ||= process_rulings
+      @get_rulings ||= process_rulings
     end
 
     # Get horizontal ruling lines

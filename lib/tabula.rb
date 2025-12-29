@@ -1,48 +1,48 @@
 # frozen_string_literal: true
 
-require_relative "tabula/version"
-require_relative "tabula/configuration"
+require_relative 'tabula/version'
+require_relative 'tabula/configuration'
 
 # Core geometry
-require_relative "tabula/core/point"
-require_relative "tabula/core/rectangle"
-require_relative "tabula/core/ruling"
-require_relative "tabula/core/spatial_index"
+require_relative 'tabula/core/point'
+require_relative 'tabula/core/rectangle'
+require_relative 'tabula/core/ruling'
+require_relative 'tabula/core/spatial_index'
 
 # Text handling
-require_relative "tabula/text/text_element"
-require_relative "tabula/text/text_chunk"
-require_relative "tabula/text/line"
+require_relative 'tabula/text/text_element'
+require_relative 'tabula/text/text_chunk'
+require_relative 'tabula/text/line'
 
 # Table structures
-require_relative "tabula/table/cell"
-require_relative "tabula/table/table"
+require_relative 'tabula/table/cell'
+require_relative 'tabula/table/table'
 
 # PDF processing
-require_relative "tabula/pdf/page"
-require_relative "tabula/pdf/text_stripper"
-require_relative "tabula/pdf/object_extractor"
+require_relative 'tabula/pdf/page'
+require_relative 'tabula/pdf/text_stripper'
+require_relative 'tabula/pdf/object_extractor'
 
 # Extraction algorithms
-require_relative "tabula/extractors/extraction_algorithm"
-require_relative "tabula/extractors/basic_extraction_algorithm"
-require_relative "tabula/extractors/spreadsheet_extraction_algorithm"
+require_relative 'tabula/extractors/extraction_algorithm'
+require_relative 'tabula/extractors/basic_extraction_algorithm'
+require_relative 'tabula/extractors/spreadsheet_extraction_algorithm'
 
 # Detection algorithms
-require_relative "tabula/detectors/detection_algorithm"
-require_relative "tabula/detectors/spreadsheet_detection_algorithm"
-require_relative "tabula/detectors/nurminen_detection_algorithm"
+require_relative 'tabula/detectors/detection_algorithm'
+require_relative 'tabula/detectors/spreadsheet_detection_algorithm'
+require_relative 'tabula/detectors/nurminen_detection_algorithm'
 
 # Writers
-require_relative "tabula/writers/writer"
-require_relative "tabula/writers/csv_writer"
-require_relative "tabula/writers/tsv_writer"
-require_relative "tabula/writers/json_writer"
-require_relative "tabula/writers/markdown_writer"
+require_relative 'tabula/writers/writer'
+require_relative 'tabula/writers/csv_writer'
+require_relative 'tabula/writers/tsv_writer'
+require_relative 'tabula/writers/json_writer'
+require_relative 'tabula/writers/markdown_writer'
 
 # Geometric algorithms
-require_relative "tabula/algorithms/cohen_sutherland_clipping"
-require_relative "tabula/algorithms/projection_profile"
+require_relative 'tabula/algorithms/cohen_sutherland_clipping'
+require_relative 'tabula/algorithms/projection_profile'
 
 module Tabula
   class Error < StandardError; end
@@ -112,9 +112,7 @@ module Tabula
     end
 
     def validate_pages!(pages)
-      unless pages.is_a?(Array)
-        raise InvalidOptionsError, "Pages must be an array, got #{pages.class}"
-      end
+      raise InvalidOptionsError, "Pages must be an array, got #{pages.class}" unless pages.is_a?(Array)
 
       pages.each do |page|
         unless page.is_a?(Integer) && page.positive?
@@ -125,7 +123,8 @@ module Tabula
 
     def validate_area!(area)
       unless area.is_a?(Array) && area.size == 4
-        raise InvalidOptionsError, "Area must be an array of exactly 4 values [top, left, bottom, right], got #{area.inspect}"
+        raise InvalidOptionsError,
+              "Area must be an array of exactly 4 values [top, left, bottom, right], got #{area.inspect}"
       end
 
       area.each_with_index do |value, index|
@@ -137,9 +136,10 @@ module Tabula
     end
 
     def validate_method!(method)
-      unless VALID_METHODS.include?(method)
-        raise InvalidOptionsError, "Method must be one of #{VALID_METHODS.map(&:inspect).join(', ')}, got #{method.inspect}"
-      end
+      return if VALID_METHODS.include?(method)
+
+      raise InvalidOptionsError,
+            "Method must be one of #{VALID_METHODS.map(&:inspect).join(', ')}, got #{method.inspect}"
     end
 
     def extract_from_page(page, method, columns)

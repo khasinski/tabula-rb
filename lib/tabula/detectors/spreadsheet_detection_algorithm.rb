@@ -11,10 +11,6 @@ module Tabula
       # Minimum table dimension (in points)
       MIN_DIMENSION = 10
 
-      def initialize(**options)
-        super
-      end
-
       # Detect table areas on a page
       # @param page [Page] page to detect tables on
       # @return [Array<Rectangle>] detected table areas

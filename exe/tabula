@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "tabula"
-require "tabula/cli"
+require 'tabula'
+require 'tabula/cli'
 
 exit Tabula::CLI.run(ARGV)

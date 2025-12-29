@@ -32,14 +32,10 @@ module Tabula
 
         loop do
           # Both endpoints inside - trivially accept
-          if (code1 | code2).zero?
-            return Ruling.new(x1, y1, x2, y2)
-          end
+          return Ruling.new(x1, y1, x2, y2) if (code1 | code2).zero?
 
           # Both endpoints share an outside region - trivially reject
-          if (code1 & code2).nonzero?
-            return nil
-          end
+          return nil if (code1 & code2).nonzero?
 
           # At least one endpoint is outside, select it
           code_out = code1.nonzero? ? code1 : code2
@@ -49,10 +45,12 @@ module Tabula
 
           # Replace the outside point
           if code_out == code1
-            x1, y1 = x, y
+            x1 = x
+            y1 = y
             code1 = compute_code(x1, y1, min_x, max_x, min_y, max_y)
           else
-            x2, y2 = x, y
+            x2 = x
+            y2 = y
             code2 = compute_code(x2, y2, min_x, max_x, min_y, max_y)
           end
         end
@@ -76,16 +74,16 @@ module Tabula
         dy = y2 - y1
 
         if (code_out & BOTTOM).nonzero?
-          x = x1 + dx * (max_y - y1) / dy
+          x = x1 + (dx * (max_y - y1) / dy)
           y = max_y
         elsif (code_out & TOP).nonzero?
-          x = x1 + dx * (min_y - y1) / dy
+          x = x1 + (dx * (min_y - y1) / dy)
           y = min_y
         elsif (code_out & RIGHT).nonzero?
-          y = y1 + dy * (max_x - x1) / dx
+          y = y1 + (dy * (max_x - x1) / dx)
           x = max_x
         elsif (code_out & LEFT).nonzero?
-          y = y1 + dy * (min_x - x1) / dx
+          y = y1 + (dy * (min_x - x1) / dx)
           x = min_x
         end
 

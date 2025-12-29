@@ -86,7 +86,7 @@ module Tabula
     end
 
     def length
-      Math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+      Math.sqrt(((x2 - x1)**2) + ((y2 - y1)**2))
     end
 
     def top
@@ -151,12 +151,12 @@ module Tabula
 
       # Check if intersection point lies within both line segments
       if horizontal?
-        x_in_self = point.x >= (left - tolerance) && point.x <= (right + tolerance)
-        y_in_other = point.y >= (other.top - tolerance) && point.y <= (other.bottom + tolerance)
+        x_in_self = point.x.between?(left - tolerance, right + tolerance)
+        y_in_other = point.y.between?(other.top - tolerance, other.bottom + tolerance)
         x_in_self && y_in_other
       else
-        y_in_self = point.y >= (top - tolerance) && point.y <= (bottom + tolerance)
-        x_in_other = point.x >= (other.left - tolerance) && point.x <= (other.right + tolerance)
+        y_in_self = point.y.between?(top - tolerance, bottom + tolerance)
+        x_in_other = point.x.between?(other.left - tolerance, other.right + tolerance)
         y_in_self && x_in_other
       end
     end
@@ -212,7 +212,11 @@ module Tabula
     end
 
     def to_s
-      orientation = horizontal? ? "H" : (vertical? ? "V" : "O")
+      orientation = if horizontal?
+                      'H'
+                    else
+                      (vertical? ? 'V' : 'O')
+                    end
       "Ruling[#{orientation}](#{x1}, #{y1}) -> (#{x2}, #{y2})"
     end
 

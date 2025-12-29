@@ -26,11 +26,11 @@ module Tabula
     end
 
     def distance_to(other)
-      Math.sqrt((x - other.x)**2 + (y - other.y)**2)
+      Math.sqrt(((x - other.x)**2) + ((y - other.y)**2))
     end
 
     def distance_squared_to(other)
-      (x - other.x)**2 + (y - other.y)**2
+      ((x - other.x)**2) + ((y - other.y)**2)
     end
 
     def +(other)
@@ -41,12 +41,12 @@ module Tabula
       Point.new(x - other.x, y - other.y)
     end
 
-    def *(scalar)
-      Point.new(x * scalar, y * scalar)
+    def *(other)
+      Point.new(x * other, y * other)
     end
 
-    def /(scalar)
-      Point.new(x / scalar, y / scalar)
+    def /(other)
+      Point.new(x / other, y / other)
     end
 
     def to_s

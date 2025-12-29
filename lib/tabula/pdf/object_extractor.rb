@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "pdf-reader"
+require 'pdf-reader'
 
 module Tabula
   # Extracts content from PDF documents.
@@ -84,13 +84,13 @@ module Tabula
     def open_pdf
       PDF::Reader.new(@path, password: @password)
     rescue PDF::Reader::EncryptedPDFError
-      raise PasswordRequiredError, "PDF is encrypted and requires a password"
+      raise PasswordRequiredError, 'PDF is encrypted and requires a password'
     rescue PDF::Reader::MalformedPDFError => e
       raise InvalidPDFError, "Invalid PDF file: #{e.message}"
     end
 
     def validate_page_number(page_number)
-      return if page_number >= 1 && page_number <= page_count
+      return if page_number.between?(1, page_count)
 
       raise ArgumentError, "Page number #{page_number} out of range (1-#{page_count})"
     end
@@ -119,9 +119,7 @@ module Tabula
 
       # Handle rotation
       rotation = pdf_page.attributes[:Rotate] || 0
-      if rotation == 90 || rotation == 270
-        page_width, page_height = page_height, page_width
-      end
+      page_width, page_height = page_height, page_width if [90, 270].include?(rotation)
 
       # Extract text
       stripper = TextStripper.new(pdf_page)
@@ -132,7 +130,8 @@ module Tabula
 
       # Only transform coordinates if there's a CropBox that differs from MediaBox
       if has_crop_box
-        text_elements = transform_to_crop_space(text_elements, media_height, crop_left, crop_bottom, crop_top, y_inverted)
+        text_elements = transform_to_crop_space(text_elements, media_height, crop_left, crop_bottom, crop_top,
+                                                y_inverted)
         rulings = transform_rulings_to_crop_space(rulings, media_height, crop_left, crop_bottom, crop_top, y_inverted)
       end
 
@@ -157,7 +156,7 @@ module Tabula
       receiver.rulings
     end
 
-    def transform_to_crop_space(text_elements, media_height, crop_left, crop_bottom, crop_top, y_inverted)
+    def transform_to_crop_space(text_elements, media_height, crop_left, _crop_bottom, crop_top, _y_inverted)
       # Transform text element coordinates from MediaBox to CropBox space
       text_elements.map do |te|
         # Calculate Y offset in top-left coordinate system
@@ -179,7 +178,7 @@ module Tabula
       end
     end
 
-    def transform_rulings_to_crop_space(rulings, media_height, crop_left, crop_bottom, crop_top, y_inverted)
+    def transform_rulings_to_crop_space(rulings, media_height, crop_left, _crop_bottom, crop_top, _y_inverted)
       # Transform ruling coordinates from MediaBox to CropBox space
       y_offset = media_height - crop_top
 
@@ -306,8 +305,8 @@ module Tabula
       private
 
       def transform_point(x, y)
-        tx = @ctm[0][0] * x + @ctm[1][0] * y + @ctm[2][0]
-        ty = @ctm[0][1] * x + @ctm[1][1] * y + @ctm[2][1]
+        tx = (@ctm[0][0] * x) + (@ctm[1][0] * y) + @ctm[2][0]
+        ty = (@ctm[0][1] * x) + (@ctm[1][1] * y) + @ctm[2][1]
         # Convert to top-left origin, handling inverted coordinate systems
         if @y_inverted
           [ty.abs, tx]

@@ -13,56 +13,56 @@ RSpec.describe Tabula::SpatialIndex do
     index.add(r3)
   end
 
-  describe "#add" do
-    it "adds rectangles to the index" do
+  describe '#add' do
+    it 'adds rectangles to the index' do
       expect(index.size).to eq(3)
     end
   end
 
-  describe "#intersects" do
-    it "finds intersecting rectangles" do
+  describe '#intersects' do
+    it 'finds intersecting rectangles' do
       query = Tabula::Rectangle.new(10, 10, 20, 20)
       results = index.intersects(query)
       expect(results).to contain_exactly(r1, r2)
     end
 
-    it "returns empty array when no intersections" do
+    it 'returns empty array when no intersections' do
       query = Tabula::Rectangle.new(100, 100, 10, 10)
       expect(index.intersects(query)).to be_empty
     end
   end
 
-  describe "#contains" do
-    it "finds contained rectangles" do
+  describe '#contains' do
+    it 'finds contained rectangles' do
       query = Tabula::Rectangle.new(0, 0, 40, 40)
       results = index.contains(query)
       expect(results).to contain_exactly(r1, r2)
     end
   end
 
-  describe "#at_point" do
-    it "finds rectangles at a point" do
+  describe '#at_point' do
+    it 'finds rectangles at a point' do
       point = Tabula::Point.new(10, 10)
       results = index.at_point(point)
       expect(results).to contain_exactly(r1)
     end
 
-    it "returns empty array when point not in any rectangle" do
+    it 'returns empty array when point not in any rectangle' do
       point = Tabula::Point.new(100, 100)
       expect(index.at_point(point)).to be_empty
     end
   end
 
-  describe "#nearby" do
-    it "finds rectangles within distance" do
+  describe '#nearby' do
+    it 'finds rectangles within distance' do
       query = Tabula::Rectangle.new(15, 15, 1, 1)
       results = index.nearby(query, 10)
       expect(results).to contain_exactly(r1, r2)
     end
   end
 
-  describe "#bounds" do
-    it "returns bounding box of all rectangles" do
+  describe '#bounds' do
+    it 'returns bounding box of all rectangles' do
       bounds = index.bounds
       expect(bounds.top).to eq(5.0)
       expect(bounds.left).to eq(5.0)
@@ -71,18 +71,18 @@ RSpec.describe Tabula::SpatialIndex do
     end
   end
 
-  describe "#empty?" do
-    it "returns true for empty index" do
+  describe '#empty?' do
+    it 'returns true for empty index' do
       expect(described_class.new.empty?).to be true
     end
 
-    it "returns false for non-empty index" do
+    it 'returns false for non-empty index' do
       expect(index.empty?).to be false
     end
   end
 
-  describe "#clear" do
-    it "removes all rectangles" do
+  describe '#clear' do
+    it 'removes all rectangles' do
       index.clear
       expect(index.empty?).to be true
     end

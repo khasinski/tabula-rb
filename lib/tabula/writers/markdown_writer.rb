@@ -50,13 +50,13 @@ module Tabula
         separators = Array.new(col_count) do
           case @alignment
           when :left
-            ":---"
+            ':---'
           when :center
-            ":---:"
+            ':---:'
           when :right
-            "---:"
+            '---:'
           else
-            "---"
+            '---'
           end
         end
         io.puts "| #{separators.join(' | ')} |"

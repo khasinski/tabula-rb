@@ -48,7 +48,7 @@ module Tabula
     # Get cell text content
     # @param separator [String] separator between text elements
     # @return [String]
-    def text(separator: " ")
+    def text(separator: ' ')
       sorted = @text_elements.sort_by { |e| [e.top, e.left] }
       sorted.map do |e|
         e.respond_to?(:text) ? e.text : e.to_s

@@ -18,7 +18,7 @@ module Tabula
         super(0, 0, 0, 0)
         @elements = []
       else
-        raise ArgumentError, "Expected TextElement, Rectangle, or nil"
+        raise ArgumentError, 'Expected TextElement, Rectangle, or nil'
       end
     end
 
@@ -48,7 +48,7 @@ module Tabula
                  @elements.sort_by(&:left).reverse
                end
       raw = sorted.map(&:text).join
-      normalize ? raw.gsub(/\s+/, " ").strip : raw
+      normalize ? raw.gsub(/\s+/, ' ').strip : raw
     end
 
     # Check if this chunk is RTL dominant
@@ -170,13 +170,11 @@ module Tabula
         current_line = Line.new
 
         sorted.each do |chunk|
-          if current_line.empty? || current_line.vertically_overlaps?(chunk)
-            current_line.add_chunk(chunk)
-          else
+          unless current_line.empty? || current_line.vertically_overlaps?(chunk)
             lines << current_line
             current_line = Line.new
-            current_line.add_chunk(chunk)
           end
+          current_line.add_chunk(chunk)
         end
 
         lines << current_line unless current_line.empty?

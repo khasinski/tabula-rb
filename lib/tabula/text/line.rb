@@ -56,7 +56,7 @@ module Tabula
     # Get the combined text of all chunks
     # @param separator [String] separator between chunks
     # @return [String]
-    def text(separator: " ")
+    def text(separator: ' ')
       sorted_chunks.map(&:text).join(separator)
     end
 
@@ -89,7 +89,7 @@ module Tabula
         gap_end = right_chunk.left
         gap_size = gap_end - gap_start
 
-        return true if x >= gap_start && x <= gap_end && gap_size >= min_gap
+        return true if x.between?(gap_start, gap_end) && gap_size >= min_gap
       end
 
       false
@@ -108,7 +108,7 @@ module Tabula
         gap_end = right_chunk.left
         gap_size = gap_end - gap_start
 
-        gaps << (gap_start + gap_end) / 2.0 if gap_size >= min_gap
+        gaps << ((gap_start + gap_end) / 2.0) if gap_size >= min_gap
       end
 
       gaps

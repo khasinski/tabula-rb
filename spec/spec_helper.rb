@@ -1,19 +1,19 @@
 # frozen_string_literal: true
 
-require "simplecov"
+require 'simplecov'
 SimpleCov.start do
-  add_filter "/spec/"
-  add_group "Core", "lib/tabula/core"
-  add_group "Text", "lib/tabula/text"
-  add_group "Table", "lib/tabula/table"
-  add_group "PDF", "lib/tabula/pdf"
-  add_group "Extractors", "lib/tabula/extractors"
-  add_group "Detectors", "lib/tabula/detectors"
-  add_group "Writers", "lib/tabula/writers"
-  add_group "Algorithms", "lib/tabula/algorithms"
+  add_filter '/spec/'
+  add_group 'Core', 'lib/tabula/core'
+  add_group 'Text', 'lib/tabula/text'
+  add_group 'Table', 'lib/tabula/table'
+  add_group 'PDF', 'lib/tabula/pdf'
+  add_group 'Extractors', 'lib/tabula/extractors'
+  add_group 'Detectors', 'lib/tabula/detectors'
+  add_group 'Writers', 'lib/tabula/writers'
+  add_group 'Algorithms', 'lib/tabula/algorithms'
 end
 
-require "tabula"
+require 'tabula'
 
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|
@@ -26,11 +26,11 @@ RSpec.configure do |config|
 
   config.shared_context_metadata_behavior = :apply_to_host_groups
   config.filter_run_when_matching :focus
-  config.example_status_persistence_file_path = "spec/examples.txt"
+  config.example_status_persistence_file_path = 'spec/examples.txt'
   config.disable_monkey_patching!
   config.warnings = true
 
-  config.default_formatter = "doc" if config.files_to_run.one?
+  config.default_formatter = 'doc' if config.files_to_run.one?
 
   config.order = :random
   Kernel.srand config.seed
@@ -38,7 +38,7 @@ end
 
 # Helper to get fixture path
 def fixture_path(name)
-  File.join(__dir__, "fixtures", name)
+  File.join(__dir__, 'fixtures', name)
 end
 
 # Helper to load fixture PDF
@@ -49,18 +49,18 @@ end
 # Helper to load expected CSV
 def fixture_csv(name)
   path = fixture_path("csv/#{name}.csv")
-  File.read(path, encoding: "UTF-8")
+  File.read(path, encoding: 'UTF-8')
 end
 
 # Helper to load expected JSON
 def fixture_json(name)
   path = fixture_path("json/#{name}.json")
-  File.read(path, encoding: "UTF-8")
+  File.read(path, encoding: 'UTF-8')
 end
 
 # Test utilities matching tabula-java's UtilsForTesting
 module TestUtils
-  extend self
+  module_function
 
   # Get an area from the first page of a PDF
   # @param path [String] path to PDF
@@ -100,7 +100,7 @@ module TestUtils
   # @return [Array<Array<String>>] 2D string array
   def table_to_array_of_rows(table)
     table.rows.map do |row|
-      row.map { |cell| cell.text }
+      row.map(&:text)
     end
   end
 
@@ -108,7 +108,7 @@ module TestUtils
   # @param path [String] path to CSV file
   # @return [String] CSV content
   def load_csv(path)
-    content = File.read(path, encoding: "UTF-8")
+    content = File.read(path, encoding: 'UTF-8')
     # Normalize to CRLF like Java version
     content.gsub(/(?<!\r)\n/, "\r")
   end
@@ -117,6 +117,6 @@ module TestUtils
   # @param path [String] path to JSON file
   # @return [String] JSON content
   def load_json(path)
-    File.read(path, encoding: "UTF-8")
+    File.read(path, encoding: 'UTF-8')
   end
 end

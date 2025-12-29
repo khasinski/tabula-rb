@@ -39,7 +39,7 @@ module Tabula
             gaps << [gap_start, gap_end] if gap_size >= min_gap_size
           end
           gap_start = nil
-          last_filled = bin * @bin_size + @bin_size
+          last_filled = (bin * @bin_size) + @bin_size
         elsif last_filled && gap_start.nil?
           gap_start = last_filled
         end
@@ -69,7 +69,7 @@ module Tabula
     # @return [Boolean] true if position is in a gap
     def in_gap?(position, min_gap_size: 3.0)
       find_gaps(min_gap_size: min_gap_size).any? do |gap_start, gap_end|
-        position >= gap_start && position <= gap_end
+        position.between?(gap_start, gap_end)
       end
     end
 

@@ -21,13 +21,13 @@ module Tabula
       # @param page [Page] page to extract from
       # @return [Array<Table>]
       def extract(page)
-        raise NotImplementedError, "Subclasses must implement #extract"
+        raise NotImplementedError, 'Subclasses must implement #extract'
       end
 
       # Get algorithm name for table metadata
       # @return [String]
       def name
-        self.class.name.split("::").last
+        self.class.name.split('::').last
       end
     end
   end
