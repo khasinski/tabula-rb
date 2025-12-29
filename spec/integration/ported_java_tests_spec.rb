@@ -191,18 +191,25 @@ RSpec.describe "Ported Java Tests" do
           Tabula::ObjectExtractor.open(fixture_pdf("encrypted")) do |extractor|
             extractor.extract_page(1)
           end
-        }.to raise_error(StandardError)
+        }.to raise_error(Tabula::PasswordRequiredError)
       end
 
       it "opens with correct password" do
-        skip "Password support not yet implemented" unless Tabula::ObjectExtractor.instance_methods.include?(:password)
-
         expect {
           Tabula::ObjectExtractor.open(fixture_pdf("encrypted"), password: "userpassword") do |extractor|
             page = extractor.extract_page(1)
             expect(page).not_to be_nil
+            expect(page.text_elements.count).to be > 0
           end
         }.not_to raise_error
+      end
+
+      it "fails with wrong password" do
+        expect {
+          Tabula::ObjectExtractor.open(fixture_pdf("encrypted"), password: "wrongpassword") do |extractor|
+            extractor.extract_page(1)
+          end
+        }.to raise_error(StandardError)
       end
     end
   end
