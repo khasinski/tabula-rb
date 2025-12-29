@@ -4,7 +4,7 @@ require "pdf-reader"
 
 module Tabula
   # Extracts text elements from PDF pages using pdf-reader.
-  # Captures character positions and font information.
+  # Uses pdf-reader's PageTextReceiver for proper font encoding and CMap handling.
   class TextStripper
     # @param page [PDF::Reader::Page] pdf-reader page object
     def initialize(page)
@@ -17,186 +17,101 @@ module Tabula
     # Extract text elements from the page
     # @return [Array<TextElement>] extracted text elements
     def extract
-      receiver = TextReceiver.new(@page)
+      # Use pdf-reader's PageTextReceiver for proper font encoding
+      receiver = PDF::Reader::PageTextReceiver.new
+      receiver.page = @page
       @page.walk(receiver)
-      @text_elements = receiver.text_elements
-      @min_char_width = receiver.min_char_width
-      @min_char_height = receiver.min_char_height
+
+      # Get character-level runs (not merged)
+      runs = receiver.runs(
+        merge: false,
+        skip_zero_width: false,
+        skip_overlapping: false
+      )
+
+      # Get page dimensions and rotation
+      rotation = @page.attributes[:Rotate] || 0
+
+      runs.each do |run|
+        next if run.text.nil? || run.text.empty?
+        next unless printable?(run.text)
+
+        # pdf-reader already applies rotation transformation
+        # For rotated pages, y coordinates are negative
+        # For non-rotated pages, we need to flip from bottom-origin to top-origin
+        if rotation == 90 || rotation == 270
+          # Rotated pages: y is negative, convert to positive
+          top = run.y.abs
+        else
+          # Non-rotated pages: convert from bottom-origin to top-origin
+          page_height = calculate_page_height
+          top = page_height - run.y
+        end
+
+        left = run.x
+        width = run.width
+        height = run.font_size
+
+        element = TextElement.new(
+          top: top,
+          left: left,
+          width: width,
+          height: height,
+          text: run.text,
+          font_name: nil, # pdf-reader doesn't expose font name in runs
+          font_size: run.font_size,
+          width_of_space: estimate_space_width(run)
+        )
+
+        @text_elements << element
+
+        if width.positive?
+          @min_char_width = [@min_char_width, width].min
+        end
+        if height.positive?
+          @min_char_height = [@min_char_height, height].min
+        end
+      end
+
       @text_elements
     end
 
     attr_reader :min_char_width, :min_char_height
 
-    # Receiver for pdf-reader page walking
-    # Captures text positioning callbacks
-    class TextReceiver
-      attr_reader :text_elements, :min_char_width, :min_char_height
+    private
 
-      def initialize(page)
-        @page = page
+    def calculate_page_height
+      box = @page.attributes[:CropBox] || @page.attributes[:MediaBox]
+      (box[3].to_f - box[1].to_f).abs
+    end
 
-        # Get page box and handle inverted coordinate systems
-        box = page.attributes[:CropBox] || page.attributes[:MediaBox]
-        @min_y = [box[1].to_f, box[3].to_f].min
-        @max_y = [box[1].to_f, box[3].to_f].max
-        @page_height = @max_y - @min_y
+    # Check if character is printable (port of Java's isPrintable)
+    def printable?(text)
+      return false if text.nil? || text.empty?
 
-        # Detect if Y-axis is inverted (negative height in box)
-        @y_inverted = box[3].to_f < box[1].to_f
+      text.each_char do |char|
+        code = char.ord
 
-        @text_elements = []
-        @min_char_width = Float::INFINITY
-        @min_char_height = Float::INFINITY
+        # Filter control characters except space, tab, newline
+        return false if code < 0x20 && code != 0x09 && code != 0x0A && code != 0x0D
 
-        @current_font = nil
-        @current_font_size = nil
-        @text_matrix = identity_matrix
-        @ctm = identity_matrix
-        @graphics_state_stack = []
+        # Filter delete character
+        return false if code == 0x7F
+
+        # Filter Unicode replacement character
+        return false if code == 0xFFFD
+
+        # Filter null character
+        return false if code == 0x00
       end
 
-      # Called for each text run
-      def show_text(string)
-        return if string.nil? || string.empty?
+      true
+    end
 
-        process_text(string)
-      end
-
-      # Called for each text run with positioning
-      def show_text_with_positioning(array)
-        array.each do |item|
-          case item
-          when String
-            process_text(item)
-          when Numeric
-            # Adjust text position (negative = move right)
-            adjust_text_position(-item / 1000.0 * @current_font_size)
-          end
-        end
-      end
-
-      # Font selection
-      def set_text_font_and_size(font_name, size)
-        @current_font = font_name
-        @current_font_size = size.to_f
-      end
-
-      # Text matrix
-      def set_text_matrix_and_text_line_matrix(a, b, c, d, e, f)
-        @text_matrix = [[a, b, 0], [c, d, 0], [e, f, 1]]
-        @text_line_matrix = @text_matrix.map(&:dup)
-      end
-
-      # Move to start of next line
-      def move_text_position(tx, ty)
-        translation = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
-        @text_line_matrix = matrix_multiply(translation, @text_line_matrix || identity_matrix)
-        @text_matrix = @text_line_matrix.map(&:dup)
-      end
-
-      # CTM operations
-      def concatenate_matrix(a, b, c, d, e, f)
-        matrix = [[a, b, 0], [c, d, 0], [e, f, 1]]
-        @ctm = matrix_multiply(matrix, @ctm)
-      end
-
-      def save_graphics_state
-        @graphics_state_stack.push({
-                                     ctm: @ctm.map(&:dup),
-                                     font: @current_font,
-                                     font_size: @current_font_size
-                                   })
-      end
-
-      def restore_graphics_state
-        state = @graphics_state_stack.pop
-        return unless state
-
-        @ctm = state[:ctm]
-        @current_font = state[:font]
-        @current_font_size = state[:font_size]
-      end
-
-      private
-
-      def process_text(string)
-        return if string.empty?
-
-        # Get current transformation
-        text_rendering_matrix = matrix_multiply(@text_matrix || identity_matrix, @ctm)
-
-        # Calculate position in page coordinates
-        x = text_rendering_matrix[2][0]
-        raw_y = text_rendering_matrix[2][1]
-
-        # Convert to top-left origin, handling inverted coordinate systems
-        if @y_inverted
-          # When Y is inverted, the raw_y is already measured from top
-          y = raw_y.abs
-        else
-          y = @page_height - raw_y
-        end
-
-        # Estimate character dimensions
-        font_size = @current_font_size || 12.0
-        scale_x = Math.sqrt(text_rendering_matrix[0][0]**2 + text_rendering_matrix[0][1]**2)
-        scale_y = Math.sqrt(text_rendering_matrix[1][0]**2 + text_rendering_matrix[1][1]**2)
-
-        char_height = font_size * scale_y
-        avg_char_width = font_size * scale_x * 0.5 # Rough estimate
-
-        # Create text elements for each character
-        string.each_char.with_index do |char, i|
-          char_x = x + (i * avg_char_width)
-          char_width = avg_char_width
-
-          element = TextElement.new(
-            top: y - char_height,
-            left: char_x,
-            width: char_width,
-            height: char_height,
-            text: char,
-            font_name: @current_font.to_s,
-            font_size: font_size,
-            width_of_space: avg_char_width
-          )
-
-          @text_elements << element
-          @min_char_width = [char_width, @min_char_width].min if char_width.positive?
-          @min_char_height = [char_height, @min_char_height].min if char_height.positive?
-        end
-
-        # Advance text position
-        advance_text_position(string.length * avg_char_width)
-      end
-
-      def adjust_text_position(amount)
-        return unless @text_matrix
-
-        @text_matrix[2][0] += amount
-      end
-
-      def advance_text_position(amount)
-        return unless @text_matrix
-
-        @text_matrix[2][0] += amount
-      end
-
-      def identity_matrix
-        [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-      end
-
-      def matrix_multiply(a, b)
-        result = Array.new(3) { Array.new(3, 0.0) }
-        3.times do |i|
-          3.times do |j|
-            3.times do |k|
-              result[i][j] += a[i][k] * b[k][j]
-            end
-          end
-        end
-        result
-      end
+    # Estimate width of space character based on font size
+    def estimate_space_width(run)
+      # Approximate space width as 0.25 of font size (common for proportional fonts)
+      run.font_size * 0.25
     end
   end
 end
