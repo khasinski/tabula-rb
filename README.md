@@ -1,6 +1,6 @@
 # Tabula
 
-[![Gem Version](https://badge.fury.io/rb/tabula.svg)](https://rubygems.org/gems/tabula)
+[![Gem Version](https://badge.fury.io/rb/tabula-rb.svg)](https://rubygems.org/gems/tabula-rb)
 
 A Ruby library for extracting tables from PDF files.
 
@@ -11,7 +11,7 @@ This is a pure Ruby port of [tabula-java](https://github.com/tabulapdf/tabula-ja
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'tabula'
+gem 'tabula-rb'
 ```
 
 And then execute:
@@ -23,7 +23,7 @@ bundle install
 Or install it directly:
 
 ```bash
-gem install tabula
+gem install tabula-rb
 ```
 
 ## Usage

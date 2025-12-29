@@ -3,7 +3,7 @@
 require_relative 'lib/tabula/version'
 
 Gem::Specification.new do |spec|
-  spec.name = 'tabula'
+  spec.name = 'tabula-rb'
   spec.version = Tabula::VERSION
   spec.authors = ['Chris Hasiński']
   spec.email = ['krzysztof.hasinski@gmail.com']
