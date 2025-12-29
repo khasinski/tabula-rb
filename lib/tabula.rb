@@ -38,6 +38,7 @@ require_relative "tabula/writers/writer"
 require_relative "tabula/writers/csv_writer"
 require_relative "tabula/writers/tsv_writer"
 require_relative "tabula/writers/json_writer"
+require_relative "tabula/writers/markdown_writer"
 
 # Geometric algorithms
 require_relative "tabula/algorithms/cohen_sutherland_clipping"

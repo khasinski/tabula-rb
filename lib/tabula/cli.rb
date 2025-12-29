@@ -5,7 +5,7 @@ require "optparse"
 module Tabula
   # Command-line interface for tabula
   class CLI
-    FORMATS = %w[CSV TSV JSON].freeze
+    FORMATS = %w[CSV TSV JSON MARKDOWN].freeze
 
     def self.run(args)
       new.run(args)
@@ -278,6 +278,8 @@ module Tabula
         Writers::TSVWriter.new.write(tables, output_io)
       when "JSON"
         Writers::JSONWriter.new(pretty: true).write(tables, output_io)
+      when "MARKDOWN"
+        Writers::MarkdownWriter.new.write(tables, output_io)
       end
     end
   end
