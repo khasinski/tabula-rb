@@ -161,25 +161,19 @@ RSpec.describe 'CSV Output Comparison' do
     let(:pdf_path) { fixture_pdf('twotables') }
     let(:expected_csv_path) { fixture_path('csv/twotables.csv') }
 
-    it 'extracts Japanese financial tables using lattice mode' do
+    it 'returns no tables in lattice mode (PDF has no ruling lines)' do
       page = TestUtils.get_page(pdf_path, 1)
 
       # This PDF has no drawn ruling lines - tables are defined by text positioning only
       # Lattice mode requires actual stroked/filled lines in the PDF graphics stream
-      # This is expected behavior, not a bug - use stream mode for this PDF
-      skip 'PDF has no ruling lines - use stream mode instead (expected behavior)' if page.rulings.empty?
+      # This is expected behavior - use stream mode for this PDF type
+      expect(page.rulings).to be_empty
 
       extractor = Tabula::Extractors::Spreadsheet.new
       tables = extractor.extract(page)
 
-      csv_output = Tabula::Writers::CSVWriter.to_string(tables)
-
-      # Verify UTF-8 encoding is preserved
-      expect(csv_output.encoding.to_s).to eq('UTF-8')
-
-      # Check we extracted some content
-      total_rows = tables.sum(&:row_count)
-      expect(total_rows).to be > 0
+      # Lattice mode correctly returns no tables when there are no ruling lines
+      expect(tables).to be_empty
     end
 
     it 'extracts Japanese financial tables using stream mode' do
