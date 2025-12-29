@@ -15,7 +15,7 @@ Gem::Specification.new do |spec|
     lattice-mode extraction (for PDFs with visible cell borders) and stream-mode
     extraction (for PDFs without ruling lines, using text positioning).
   DESC
-  spec.homepage = 'https://github.com/tabulapdf/tabula-rb'
+  spec.homepage = 'https://github.com/khasinski/tabula-rb'
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 3.1.0'
 
