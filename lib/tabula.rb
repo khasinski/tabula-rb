@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "tabula/version"
+require_relative "tabula/configuration"
 
 # Core geometry
 require_relative "tabula/core/point"
