@@ -52,4 +52,35 @@ RSpec.describe Tabula::Cell do
       expect(cell.empty?).to be false
     end
   end
+
+  describe "#blank?" do
+    it "returns true for cell without text elements" do
+      cell = described_class.new(0, 0, 100, 50)
+      expect(cell.blank?).to be true
+    end
+
+    it "returns true for cell with only whitespace text" do
+      cell = described_class.new(0, 0, 100, 50)
+      cell.add(Tabula::TextElement.new(top: 5, left: 5, width: 20, height: 10, text: "   "))
+      expect(cell.blank?).to be true
+    end
+
+    it "returns true for cell with empty text" do
+      cell = described_class.new(0, 0, 100, 50)
+      cell.add(Tabula::TextElement.new(top: 5, left: 5, width: 20, height: 10, text: ""))
+      expect(cell.blank?).to be true
+    end
+
+    it "returns false for cell with meaningful text" do
+      cell = described_class.new(0, 0, 100, 50)
+      cell.add(Tabula::TextElement.new(top: 5, left: 5, width: 20, height: 10, text: "Hello"))
+      expect(cell.blank?).to be false
+    end
+
+    it "returns false for cell with text that has leading/trailing whitespace" do
+      cell = described_class.new(0, 0, 100, 50)
+      cell.add(Tabula::TextElement.new(top: 5, left: 5, width: 20, height: 10, text: "  Hi  "))
+      expect(cell.blank?).to be false
+    end
+  end
 end

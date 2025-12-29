@@ -61,10 +61,19 @@ module Tabula
       @text_elements.any?
     end
 
-    # Check if cell is empty (no text or placeholder)
+    # Check if cell is empty (no text elements)
     # @return [Boolean]
     def empty?
       @text_elements.empty?
+    end
+
+    # Check if cell is blank (empty or contains only whitespace)
+    # @return [Boolean]
+    def blank?
+      return true if @text_elements.empty?
+
+      # Check if all text content is just whitespace
+      text.strip.empty?
     end
 
     # Check if this is a placeholder cell
