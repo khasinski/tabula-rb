@@ -62,9 +62,9 @@ RSpec.describe Tabula::ObjectExtractor do
       # Verify text elements are extracted
       expect(page.text_elements).not_to be_empty
 
-      # Verify text content makes sense (first few characters should spell "Bill")
-      first_chars = page.text_elements.first(4).map(&:text).join
-      expect(first_chars).to eq("Bill")
+      # Verify text content makes sense (should contain "Bill" somewhere in the text)
+      all_text = page.text_elements.map(&:text).join(" ")
+      expect(all_text).to include("Bill")
     end
 
     it "does not raise NPE in point comparator" do

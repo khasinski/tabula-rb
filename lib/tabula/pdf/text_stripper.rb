@@ -22,11 +22,12 @@ module Tabula
       receiver.page = @page
       @page.walk(receiver)
 
-      # Get character-level runs (not merged)
+      # Get merged text runs for readable output
+      # merge: true combines adjacent characters into words/phrases
       runs = receiver.runs(
-        merge: false,
-        skip_zero_width: false,
-        skip_overlapping: false
+        merge: true,
+        skip_zero_width: true,
+        skip_overlapping: true
       )
 
       # Get page dimensions and rotation

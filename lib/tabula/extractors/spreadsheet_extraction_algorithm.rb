@@ -28,13 +28,13 @@ module Tabula
         cells = find_cells(horizontal, vertical)
         return [] if cells.size < MIN_CELLS
 
-        # Find spreadsheet regions from cells
-        spreadsheet_areas = find_spreadsheet_areas(cells)
-        return [] if spreadsheet_areas.empty?
+        # Find spreadsheet regions from cells and get cells per region
+        cell_groups = find_spreadsheet_areas_with_cells(cells)
+        return [] if cell_groups.empty?
 
-        # Extract tables from each region
-        tables = spreadsheet_areas.map do |area|
-          extract_table_from_area(page, area, horizontal, vertical)
+        # Extract tables from each region using the found cells
+        tables = cell_groups.map do |region_cells|
+          extract_table_from_cells(page, region_cells, horizontal, vertical)
         end
 
         tables.reject(&:empty?)
@@ -65,20 +65,30 @@ module Tabula
         intersections = build_intersection_map(horizontal_rulings, vertical_rulings)
         return cells if intersections.empty?
 
-        # Get unique x and y positions from intersections
-        x_positions = intersections.keys.map { |x, _| x }.uniq.sort
-        y_positions = intersections.keys.map { |_, y| y }.uniq.sort
+        # Get unique y positions from horizontal rulings (row boundaries)
+        y_positions = horizontal_rulings.map { |r| r.y1.round(1) }.uniq.sort
 
-        return cells if y_positions.size < 2 || x_positions.size < 2
+        return cells if y_positions.size < 2
 
-        # Find cells by checking for corners OR edges
+        # Process each row individually to handle spanning cells
         y_positions.each_cons(2) do |top, bottom|
+          # Find vertical rulings that span this row (intersect with row's Y range)
+          row_verticals = vertical_rulings.select do |v|
+            v.y1 <= top + tolerance && v.y2 >= bottom - tolerance
+          end
+
+          # Get unique X positions from vertical rulings only
+          x_positions = row_verticals.map { |v| v.x1.round(1) }.uniq.sort
+
+          next if x_positions.size < 2
+
+          # Create cells for this row
           x_positions.each_cons(2) do |left, right|
-            # First try corner-based validation (more precise)
-            if valid_cell_by_corners?(left, right, top, bottom, intersections, tolerance)
+            # Verify this cell has valid edges
+            if valid_cell_by_edges?(left, right, top, bottom, horizontal_rulings, vertical_rulings, tolerance)
               cells << Cell.new(top, left, right - left, bottom - top)
-            # Fall back to edge-based validation (handles some spanning cells)
-            elsif valid_cell_by_edges?(left, right, top, bottom, horizontal_rulings, vertical_rulings, tolerance)
+            # Also accept cells with corner validation
+            elsif valid_cell_by_corners?(left, right, top, bottom, intersections, tolerance)
               cells << Cell.new(top, left, right - left, bottom - top)
             end
           end
@@ -155,10 +165,16 @@ module Tabula
       end
 
       def find_spreadsheet_areas(cells)
+        find_spreadsheet_areas_with_cells(cells).map do |region_cells|
+          Rectangle.bounding_box_of(region_cells)
+        end
+      end
+
+      def find_spreadsheet_areas_with_cells(cells)
         return [] if cells.empty?
 
         # Group adjacent cells into regions
-        regions = []
+        cell_groups = []
         remaining = cells.dup
 
         until remaining.empty?
@@ -173,11 +189,12 @@ module Tabula
             remaining -= adjacent
           end
 
-          regions << Rectangle.bounding_box_of(region)
+          # Filter out small regions
+          bbox = Rectangle.bounding_box_of(region)
+          cell_groups << region if bbox.area > 0
         end
 
-        # Filter out small regions
-        regions.select { |r| r.area > 0 }
+        cell_groups
       end
 
       def adjacent?(region, cell)
@@ -197,6 +214,48 @@ module Tabula
         horizontal_overlap = c1.horizontally_overlaps?(c2, 0.5)
 
         (horizontal && vertical_overlap) || (vertical && horizontal_overlap)
+      end
+
+      def extract_table_from_cells(page, cells, horizontal_rulings, vertical_rulings)
+        return Table.new if cells.empty?
+
+        # Get area bounds from cells
+        area = Rectangle.bounding_box_of(cells)
+
+        # Get rulings within the area
+        h_rulings = horizontal_rulings.select { |r| ruling_in_area?(r, area) }
+        v_rulings = vertical_rulings.select { |r| ruling_in_area?(r, area) }
+
+        # Build table
+        table = Table::WithRulingLines.new(
+          horizontal_rulings: h_rulings,
+          vertical_rulings: v_rulings,
+          extraction_method: name,
+          page_number: page.page_number
+        )
+
+        # Organize cells into grid positions
+        # Get unique y positions (rows) and sort cells by position
+        y_positions = cells.map { |c| c.top.round(1) }.uniq.sort
+        y_to_row = y_positions.each_with_index.to_h
+
+        cells.each do |cell|
+          row_idx = y_to_row[cell.top.round(1)]
+          next unless row_idx
+
+          # Find column index based on x position within this row
+          row_cells = cells.select { |c| (c.top - cell.top).abs < 2 }.sort_by(&:left)
+          col_idx = row_cells.index(cell) || 0
+
+          # Populate cell with text elements
+          cell_area = Rectangle.from_bounds(cell.top, cell.left, cell.bottom, cell.right)
+          text_elements = page.get_text(cell_area)
+          cell.add_all(text_elements)
+
+          table.add(row_idx, col_idx, cell)
+        end
+
+        table
       end
 
       def extract_table_from_area(page, area, horizontal_rulings, vertical_rulings)

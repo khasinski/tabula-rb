@@ -36,7 +36,13 @@ module Tabula
     def get_text(area = nil)
       return @text_elements if area.nil?
 
-      @spatial_index.contains(area)
+      # Use intersects because text elements may extend beyond cell boundaries
+      # (e.g., text with descenders or tall characters)
+      # Filter to elements whose origin (top-left) is within the area
+      @spatial_index.intersects(area).select do |te|
+        te.top >= area.top && te.top < area.bottom &&
+          te.left >= area.left && te.left < area.right
+      end
     end
 
     # Get the bounding box of all text on the page
