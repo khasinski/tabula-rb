@@ -1,6 +1,8 @@
 # Tabula
 
-A Ruby library for extracting tables from PDF files. Port of [tabula-java](https://github.com/tabulapdf/tabula-java).
+A Ruby library for extracting tables from PDF files.
+
+This is a pure Ruby port of [tabula-java](https://github.com/tabulapdf/tabula-java), the open-source library that powers [Tabula](https://tabula.technology/). It implements the same extraction algorithms and produces compatible output, allowing you to extract tables from PDFs without requiring Java or JRuby.
 
 ## Installation
 
@@ -165,4 +167,8 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-This is a Ruby port of [tabula-java](https://github.com/tabulapdf/tabula-java), the open-source library that powers [Tabula](https://tabula.technology/).
+This gem is a Ruby port of [tabula-java](https://github.com/tabulapdf/tabula-java) by the [Tabula](https://tabula.technology/) team. The extraction algorithms, test fixtures, and expected behaviors are derived from the original Java implementation.
+
+Special thanks to:
+- [Manuel Aristarán](https://github.com/jazzido) and the Tabula team for creating the original tabula-java
+- The [pdf-reader](https://github.com/yob/pdf-reader) gem maintainers for the excellent PDF parsing library

@@ -8,11 +8,12 @@ Gem::Specification.new do |spec|
   spec.authors = ['Chris Hasiński']
   spec.email = ['krzysztof.hasinski@gmail.com']
 
-  spec.summary = 'Extract tables from PDF files'
+  spec.summary = 'Extract tables from PDF files (Ruby port of tabula-java)'
   spec.description = <<~DESC
-    Tabula is a library for extracting tables from PDF files. It supports both
-    lattice-mode extraction (for PDFs with ruling lines) and stream-mode extraction
-    (for PDFs without ruling lines). Ruby port of tabula-java.
+    Tabula is a Ruby port of tabula-java (https://github.com/tabulapdf/tabula-java),
+    the library that powers the Tabula PDF table extraction tool. It supports both
+    lattice-mode extraction (for PDFs with visible cell borders) and stream-mode
+    extraction (for PDFs without ruling lines, using text positioning).
   DESC
   spec.homepage = 'https://github.com/tabulapdf/tabula-rb'
   spec.license = 'MIT'
