@@ -2,7 +2,7 @@
 TABULA-RB: ROADMAP TO 100% FEATURE PARITY WITH TABULA-JAVA
 ================================================================================
 
-Current Status: 275 tests passing, 84.32% code coverage
+Current Status: 276 tests passing, 84.2% code coverage
 Overall Grade: B+ (feature complete, some edge cases pending)
 
 Recent Achievements:
@@ -12,12 +12,12 @@ Recent Achievements:
 - [x] Hybrid cell detection (corner + edge-based validation)
 - [x] Input validation with meaningful error messages
 - [x] CSV comparison tests against tabula-java fixtures
-- [x] 29 tests ported from tabula-java test suite
+- [x] 30 tests ported from tabula-java test suite
+- [x] Password protected PDF support (already implemented!)
 
-Pending Items (3 tests):
+Pending Items (2 tests):
 - [ ] Spanning cell extraction (needs cell merging logic)
-- [ ] Password protected PDF support
-- [ ] twotables.pdf ruling detection
+- [ ] twotables.pdf ruling detection (Japanese tables)
 
 ================================================================================
 PHASE 1: CRITICAL TEXT EXTRACTION FIXES
